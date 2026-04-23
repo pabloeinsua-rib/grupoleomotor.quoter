@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Quoter Auto-Rellenador (BETA)",
+  "version": "1.0",
+  "description": "Autocompleta los formularios de CaixaBank desde los datos extraídos por Quoter IA.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "clipboardRead"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "128": "icon128.png"
+    }
+  },
+  "host_permissions": [
+    "*://*.caixabankpc.com/*"
+  ]
+}

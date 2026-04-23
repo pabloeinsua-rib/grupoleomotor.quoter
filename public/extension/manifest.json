@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Quoter Link",
+  "version": "1.0",
+  "description": "Conecta Quoter con la Web de Operaciones.",
+  "permissions": [
+    "clipboardRead",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://autos.caixabankpc.com/*",
+    "*://localhost/*",
+    "https://*.scf.usercontent.goog/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://autos.caixabankpc.com/*"],
+      "js": ["content-caixa.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["*://localhost/*", "https://*.scf.usercontent.goog/*"],
+      "js": ["content-quoter.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
