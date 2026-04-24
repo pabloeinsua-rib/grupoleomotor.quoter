@@ -42,21 +42,14 @@ const Logo: React.FC<LogoProps> = ({ className, color = 'solid-blue' }) => {
     );
   }
 
-  // Default: solid blue background with white target
+  // Default: solid blue version (now using the new high-res icon)
   return (
-    <svg
+    <img 
+      src="https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/ICON%20FOLDER%20COCHE/icon-512x512.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL0lDT05gRk9MREVSIENPQ0hFL2ljb24tNTEyeDUxMi5wbmciLCJpYXQiOjE3NzcwNTE4ODgsImV4cCI6MjY0MDk2NTQ4OH0.TgtTeCi7eLg44Q_nP2b-10RmTJbafPpz8xCtsd-44vc" 
+      alt="Quoter Logo" 
       className={className}
-      viewBox="0 0 32 32"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="Quoter Logo"
-    >
-      <circle cx="16" cy="16" r="16" fill="#00a1e0" />
-      <g fill="none" stroke="white" strokeWidth="2">
-        <circle cx="16" cy="16" r="13" />
-        <circle cx="16" cy="16" r="8" />
-        <circle cx="16" cy="16" r="3" />
-      </g>
-    </svg>
+      style={{ objectFit: 'contain' }}
+    />
   );
 };
 

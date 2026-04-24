@@ -378,6 +378,20 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         .animate-glow-red {
             animation: glow-red 0.8s ease-in-out infinite;
         }
+        @keyframes gradient-border {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .fancy-border-card {
+            background: linear-gradient(90deg, #00a1e0, #00ff88, #4f46e5, #ec4899, #00a1e0);
+            background-size: 300% 300%;
+            animation: gradient-border 6s ease infinite;
+            padding: 1.2px;
+            box-shadow: 
+                0 0 15px rgba(0, 161, 224, 0.3),
+                0 4px 15px rgba(0, 0, 0, 0.1);
+        }
       `}</style>
 
       <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-3 gap-8 items-center justify-items-center px-4 md:px-8">
@@ -515,27 +529,29 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           className="hidden md:flex w-full max-w-[220px] flex-shrink-0 animate-fade-in-up md:mt-0 md:col-start-3 justify-self-center md:justify-self-center lg:justify-self-center xl:justify-self-center"
           style={{ animationDelay: "200ms" }}
         >
-          <div className="bg-white p-5 sm:p-6 rounded-none relative overflow-hidden transition-all duration-300 border border-slate-200 shadow-lg flex flex-col items-center text-center">
-            <h3 className="font-montserrat font-bold text-sm text-black mb-1.5 leading-tight uppercase tracking-wide">
-              Lleva Quoter
-              <br />
-              contigo
-            </h3>
-            <p className="text-[10px] text-slate-500 mb-5 max-w-[160px] leading-relaxed">
-              Descarga la APP a tu Smartphone con este QR.
-            </p>
+          <div className="fancy-border-card rounded-none shadow-lg">
+            <div className="bg-white p-5 sm:p-6 rounded-none flex flex-col items-center text-center">
+              <h3 className="font-montserrat font-bold text-sm text-black mb-1.5 leading-tight uppercase tracking-wide">
+                Lleva Quoter
+                <br />
+                contigo
+              </h3>
+              <p className="text-[10px] text-slate-500 mb-5 max-w-[160px] leading-relaxed">
+                Descarga la APP a tu Smartphone con este QR.
+              </p>
 
-            <div className="bg-white p-2 border border-slate-300 shadow-sm rounded-none mb-3">
-              <img
-                src="https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/QR%20PARA%20ACUERDOS/qr-codeQUOTERGRUPOLEOMOTOR.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL1FSIFBBUkEgQUNVRVJET1MvcXItY29kZVFVT1RFUkdSVVBPTEVPTU9UT1IucG5nIiwiaWF0IjoxNzc2OTQwODU3LCJleHAiOjI2NDA4NTQ0NTd9.u31X3ZbkOqwi8LyA3mJ6tZuCnnnipGMIN8V2S4lJ7I4"
-                alt="QR Descarga App"
-                className="w-24 h-24 sm:w-28 sm:h-28 object-contain"
-              />
+              <div className="bg-white p-2 border border-slate-300 shadow-sm rounded-none mb-3">
+                <img
+                  src="https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/QR%20PARA%20ACUERDOS/qr-codeQUOTERGRUPOLEOMOTOR.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL1FSIFBBUkEgQUNVRVJET1MvcXItY29kZVFVT1RFUkdSVVBPTEVPTU9UT1IucG5nIiwiaWF0IjoxNzc2OTQwODU3LCJleHAiOjI2NDA4NTQ0NTd9.u31X3ZbkOqwi8LyA3mJ6tZuCnnnipGMIN8V2S4lJ7I4"
+                  alt="QR Descarga App"
+                  className="w-24 h-24 sm:w-28 sm:h-28 object-contain"
+                />
+              </div>
+
+              <p className="text-[10px] font-bold text-black uppercase tracking-widest mt-1">
+                Grupo Leomotor
+              </p>
             </div>
-
-            <p className="text-[10px] font-bold text-black uppercase tracking-widest mt-1">
-              Grupo Leomotor
-            </p>
           </div>
         </div>
       </div>

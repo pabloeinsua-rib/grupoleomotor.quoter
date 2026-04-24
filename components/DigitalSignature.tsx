@@ -200,7 +200,7 @@ const DigitalSignature: React.FC<DigitalSignatureProps> = ({ onNavigate }) => {
 
     const topCards = [
         { id: 'otp', title: 'Firma OTP Auto (A Distancia)', subtitle: 'Proceso Web auto con firma digital por SMS', details: 'Firma a distancia mediante envío de código SMS.', imageUrl: 'https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/ICONO%20INICIAR%20FIRMA%20DIGITAL.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL0lDT05PIElOSUNJQVIgRklSTUEgRElHSVRBTC5wbmciLCJpYXQiOjE3NzY2OTk3OTcsImV4cCI6ODgxNzY2MTMzOTd9.AeBQ0St-iwwvc9UvLLrMEzo0prEID7TU8J6heulGQYE', imageClass: 'object-contain h-40 w-40 scale-125' },
-        { id: 'app', title: 'Firma APP Móvil / Tablet', subtitle: 'Presencial', imageUrl: 'https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/ICONO%20NUEVA%20APP%20FIRMA%20DIGITAL%20PRESENCIAL.webp?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL0lDT05PIE5VRVZBIEFQUCBGSVJNQSBESUdJVEFMIFBSRVNFTkNJQUwud2VicCIsImlhdCI6MTc3NjY4NTU0NCwiZXhwIjoyNjQwNTk5MTQ0fQ.BbUwpDdtVqQugn5arKwdTIyhto1dPlNhLIjLEkf1rpo', imageClass: 'object-contain h-24 w-24 p-2' },
+        { id: 'app', title: 'Firma APP Móvil Presencial', subtitle: 'Presencial', imageUrl: 'https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/ICONO%20NUEVA%20APP%20FIRMA%20DIGITAL%20PRESENCIAL.webp?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL0lDT05PIE5VRVZBIEFQUCBGSVJNQSBESUdJVEFMIFBSRVNFTkNJQUwud2VicCIsImlhdCI6MTc3NjY4NTU0NCwiZXhwIjoyNjQwNTk5MTQ0fQ.BbUwpDdtVqQugn5arKwdTIyhto1dPlNhLIjLEkf1rpo', imageClass: 'object-contain h-24 w-24 p-2' },
     ];
 
     const bottomCards = [
@@ -404,63 +404,65 @@ const DigitalSignature: React.FC<DigitalSignatureProps> = ({ onNavigate }) => {
                 </Modal>
             )}
             {activeModal === 'appInfo' && (
-                 <Modal title="Información Firma APP Móvil" onClose={() => setActiveModal(null)} size="lg">
-                     <div className="prose prose-sm max-w-none">
-                        <div className="not-prose text-center">
-                            <p className="text-base text-gray-600 mb-8">La firma se realiza de forma segura a través de nuestra aplicación móvil <strong>"Firma Digital CaixaBank P&C"</strong>.</p>
-                            
-                            <div className="flex justify-center gap-12 mb-8">
-                                <div className="flex flex-col items-center">
-                                    <img 
-                                        src="https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/NUEVA_APP_FIRMA_IOS.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL05VRVZBX0FQUF9GSVJNQV9JT1MucG5nIiwiaWF0IjoxNzc2Njg1ODM4LCJleHAiOjI2NDA1OTk0Mzh9.BSDldTuTY0Ir03qnWUSRGmFucbzhBaDjAf8RcWmbxUE" 
-                                        alt="iOS QR Code" 
-                                        className="h-28 w-28 object-contain mb-3 border border-slate-200 rounded-md p-1 shadow-sm"
-                                    />
-                                    <img 
-                                        src="https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/appstore-icon.svg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL2FwcHN0b3JlLWljb24uc3ZnIiwiaWF0IjoxNzc2Njg1OTE2LCJleHAiOjI2NDA1OTk1MTZ9.X2lDiieCfgYS79zAQU3BBct6pG9z_TR3U1xISYS4gb0" 
-                                        alt="Descargar en App Store" 
-                                        className="h-8 object-contain"
-                                    />
-                                </div>
-                                <div className="flex flex-col items-center">
-                                    <img 
-                                        src="https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/NUEVA_APP_FIRMA_ANDROID.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL05VRVZBX0FQUF9GSVJNQV9BTkRST0lELnBuZyIsImlhdCI6MTc3NjY4NTg3MCwiZXhwIjoyNjQwNTk5NDcwfQ.hICI_vX66Dci55OWGpqPfAbInDXg5_c8Kkxpt-i9iKA" 
-                                        alt="Android QR Code" 
-                                        className="h-28 w-28 object-contain mb-3 border border-slate-200 rounded-md p-1 shadow-sm"
-                                    />
-                                    <img 
-                                        src="https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/playstore-icon.svg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL3BsYXlzdG9yZS1pY29uLnN2ZyIsImlhdCI6MTc3NjY4NTk2MiwiZXhwIjoyNjQwNTk5NTYyfQ.6qQ2BCRv_RvwmuIOgFsdeheg33qxSEs79kJQ3Bmo_j0" 
-                                        alt="Disponible en Google Play" 
-                                        className="h-8 object-contain"
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                 <Modal title="Descarga la App inOne" onClose={() => setActiveModal(null)} size="lg">
+                     <div className="flex flex-col items-center">
+                        <p className="text-sm text-slate-500 text-center mb-8 leading-relaxed max-w-md">
+                            Propónle a tu cliente que descargue la <strong>APP inOne en su móvil</strong>, para que pueda tener a mano toda la información que necesita. Es la herramienta definitiva para que gestione fácilmente sus contratos de crédito y realice todas sus gestiones en un solo lugar.
+                        </p>
                         
-                        <div className="mt-8 space-y-4">
-                            <div className="bg-[#f0f5fa] p-5 rounded-xl border-l-[6px] border-[#2563eb]">
-                                <p className="font-semibold text-[#1e40af] mb-3">Antes de Iniciar:</p>
-                                <ul className="list-disc list-outside ml-4 text-[#1e40af] text-sm space-y-2">
-                                    <li>Indica tu Usuario y Contraseña.</li>
-                                    <li>Si no recuerdas tu contraseña, pulsa en <strong>"He Olvidado Mi Contraseña"</strong> para generar una nueva.</li>
-                                </ul>
+                        <div className="flex justify-center gap-8 mb-10 w-full">
+                            <div className="flex flex-col items-center flex-1">
+                                <img 
+                                    src="https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/appstore-icon.svg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL2FwcHN0b3JlLWljb24uc3ZnIiwiaWF0IjoxNzc2Njg1OTE2LCJleHAiOjI2NDA1OTk1MTZ9.X2lDiieCfgYS79zAQU3BBct6pG9z_TR3U1xISYS4gb0" 
+                                    alt="App Store" 
+                                    className="h-10 object-contain mb-4"
+                                />
+                                <div className="bg-white p-2 border border-slate-100 rounded-lg shadow-sm">
+                                    <img 
+                                        src="https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/NUEVA%20APP%20FIRMA/NUEVA_APP_FIRMA_IOS.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL05VRVZBIEFQUCBGSVJNQS9OVUVWQV9BUFBfRklSTUFfSU9TLnBuZyIsImlhdCI6MTc3NzA1MDA1MywiZXhwIjoyNjQwOTYzNjUzfQ.geenUz6PmX3ssUMorwDfYxWr_5B11CTKDyLtyL1IbFM" 
+                                        alt="iOS QR Code" 
+                                        className="h-28 w-28 object-contain"
+                                    />
+                                </div>
                             </div>
-                            
-                            <div className="bg-[#f8fafc] p-5 rounded-xl">
-                                <h4 className="font-bold text-slate-800 mb-3">Requisitos para firma presencial:</h4>
-                                <p className="text-sm text-slate-600 mb-3">Para que el botón "Firmar" esté habilitado en la solicitud, verifica en la Web de Operaciones que:</p>
-                                <ul className="list-disc list-outside ml-4 text-slate-700 text-sm space-y-2">
-                                    <li>El <strong>Nº de Bastidor</strong> está cumplimentado.</li>
-                                    <li>La <strong>Matrícula</strong> está informada (si es vehículo matriculado).</li>
-                                </ul>
+
+                            <div className="flex flex-col items-center justify-center">
+                                <div className="bg-[#3b454e] p-4 rounded-none shadow-sm flex flex-col items-center">
+                                    <img 
+                                        src="https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/ICONO%20NUEVA%20APP%20FIRMA%20DIGITAL%20PRESENCIAL.webp?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL0lDT05PIE5VRVZBIEFQUCBGSVJNQSBESUdJVEFMIFBSRVNFTkNJQUwud2VicCIsImlhdCI6MTc3NjY4Mjk3MSwiZXhwIjoyNjQwNTk2NTcxfQ.z2D6OIslucUxNCJiUnSw1UHEw0IczT-ho_Man6ugLSk" 
+                                        alt="CaixaBank P&C" 
+                                        className="w-10 h-10 object-contain" 
+                                    />
+                                    <div className="mt-1 text-center">
+                                        <p className="text-white text-[5px] font-bold uppercase tracking-widest leading-none">CaixaBank</p>
+                                        <p className="text-white text-[4px] font-medium uppercase tracking-[0.2em] leading-none opacity-70">Payments & Consumer</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col items-center flex-1">
+                                <img 
+                                    src="https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/playstore-icon.svg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL3BsYXlzdG9yZS1pY29uLnN2ZyIsImlhdCI6MTc3NjY4NTk2MiwiZXhwIjoyNjQwNTk5NTYyfQ.6qQ2BCRv_RvwmuIOgFsdeheg33qxSEs79kJQ3Bmo_j0" 
+                                    alt="Google Play" 
+                                    className="h-10 object-contain mb-4"
+                                />
+                                <div className="bg-white p-2 border border-slate-100 rounded-lg shadow-sm">
+                                    <img 
+                                        src="https://tdggghoxqrsekjqjhqit.supabase.co/storage/v1/object/sign/QUOTER%20CPC/NUEVA%20APP%20FIRMA/NUEVA_APP_FIRMA_ANDROID.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84MDg0MDVhOS03NTAyLTRmODEtYWNiMS1lYzIxNWViZDBlNmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJRVU9URVIgQ1BDL05VRVZBIEFQUCBGSVJNQS9OVUVWQV9BUFBfRklSTUFfQU5EUk9JRC5wbmciLCJpYXQiOjE3NzcwNTAwNzMsImV4cCI6MjY0MDk2MzY3M30.yXS22TgihpH-tTY-SxNvbyqZ564jSDi2d2u9bYc62R0" 
+                                        alt="Android QR Code" 
+                                        className="h-28 w-28 object-contain"
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        <div className="mt-6 flex items-start gap-3 text-[#b91c1c] font-medium bg-[#fef2f2] p-4 rounded-xl text-sm text-left">
-                            <WarningIcon className="w-6 h-6 flex-shrink-0 mt-0.5 text-[#ef4444]" />
-                            <p>Recuerda: para importes superiores a <strong>40.000 €</strong> (Asalariados) o <strong>30.000 €</strong> (Empresas), la firma deberá realizarse ante notario.</p>
-                        </div>
-                    </div>
+                        <button 
+                            onClick={() => { setShowPdfGuide(true); setActiveModal(null); }}
+                            className="w-full bg-black text-white font-bold py-4 px-6 hover:bg-slate-800 transition-all text-xs tracking-widest uppercase flex items-center justify-center gap-3 rounded-none shadow-md"
+                        >
+                            <DownloadIcon className="w-5 h-5"/> MOSTRAR GUÍA RÁPIDA INONE
+                        </button>
+                     </div>
                  </Modal>
             )}
             {activeModal === 'gestoriaInfo' && (
