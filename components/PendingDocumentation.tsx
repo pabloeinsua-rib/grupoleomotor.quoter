@@ -33,6 +33,13 @@ const SendDocumentationModal = ({
             return;
         }
 
+        let totalSize = 0;
+        files.forEach(f => totalSize += f.size);
+        if (totalSize > 4400000) {
+            setError(`Los archivos adjuntos ocupan demasiado (${(totalSize / 1024 / 1024).toFixed(2)} MB). Vercel limita los envíos a 4.5MB. Por favor, sube archivos más pequeños.`);
+            return;
+        }
+
         setIsSending(true);
         setError('');
 

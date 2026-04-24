@@ -167,35 +167,46 @@ const AmortizationTable: React.FC<AmortizationTableProps> = ({
                 <h2 className="text-xl font-bold text-black">Cuadro de Amortización</h2>
             </div>
 
-            <div className="flex-grow">
-                <table className="w-full text-xs border-collapse table-fixed">
-                    <thead>
+            {/* Table wrapper for scrolling */}
+            <div className="flex-grow overflow-auto">
+                <table className="w-full text-[8px] md:text-xs border-collapse table-fixed min-w-[500px]">
+                    <thead className="sticky top-0 z-20">
                         <tr className="bg-slate-100 text-slate-900 font-bold border-none">
-                            <th className="py-2 px-1 text-left w-10">Mes</th>
-                            <th className="py-2 px-1 text-right">{isLeasing ? 'Cuota Neta' : 'Cuota s/ Seg'}</th>
-                            <th className="py-2 px-1 text-right">Intereses</th>
-                            <th className="py-2 px-1 text-right">Amortización</th>
-                            <th className="py-2 px-1 text-right">Cap. Pendiente</th>
-                            {!isLeasing && <th className="py-2 px-1 text-right">Cap. Amortizado</th>}
-                            {isLeasing && <th className="py-2 px-1 text-right">IVA (21%)</th>}
-                            <th className="py-2 px-1 text-right text-caixa-blue">{isLeasing ? 'Cuota Total' : 'Cuota Total'}</th>
+                            <th className="py-2 px-1 text-left w-6 md:w-8">#</th>
+                            <th className="py-2 px-0.5 text-right font-medium leading-tight">{isLeasing ? 'Neta' : 'Cuota'}</th>
+                            <th className="py-2 px-0.5 text-right font-medium leading-tight">Int.</th>
+                            <th className="py-2 px-0.5 text-right font-medium leading-tight">Amort.</th>
+                            <th className="py-2 px-0.5 text-right font-medium leading-tight">Pend.</th>
+                            {!isLeasing && <th className="py-2 px-0.5 text-right font-medium leading-tight">Total Am.</th>}
+                            {isLeasing && <th className="py-2 px-0.5 text-right font-medium leading-tight">IVA</th>}
+                            <th className="py-2 px-1 text-right text-caixa-blue font-bold">Total</th>
                         </tr>
                     </thead>
                     <tbody>
                         {schedule.map((row, index) => (
                             <tr key={row.nCuota} className={`border-b border-gray-100 ${index % 2 !== 0 ? 'bg-slate-50' : 'bg-white'}`}>
                                 <td className="py-1.5 px-1 text-left text-gray-600">{row.nCuota}</td>
-                                <td className="py-1.5 px-1 text-right text-gray-600">{formatCurrency(row.cuotaSinSeguro)}</td>
-                                <td className="py-1.5 px-1 text-right text-gray-600">{formatCurrency(row.intereses)}</td>
-                                <td className="py-1.5 px-1 text-right text-gray-600">{formatCurrency(row.amortizacion)}</td>
-                                <td className="py-1.5 px-1 text-right text-gray-600">{formatCurrency(row.capitalPendiente)}</td>
-                                {!isLeasing && <td className="py-1.5 px-1 text-right text-gray-600">{formatCurrency(row.capitalAmortizado)}</td>}
-                                {isLeasing && <td className="py-1.5 px-1 text-right text-gray-600">{formatCurrency(row.iva)}</td>}
-                                <td className="py-1.5 px-1 text-right font-bold text-caixa-blue">{formatCurrency(row.cuotaTotal)}</td>
+                                <td className="py-1.5 px-0.5 text-right text-gray-600 truncate">{formatCurrency(row.cuotaSinSeguro)}</td>
+                                <td className="py-1.5 px-0.5 text-right text-gray-600 truncate">{formatCurrency(row.intereses)}</td>
+                                <td className="py-1.5 px-0.5 text-right text-gray-600 truncate">{formatCurrency(row.amortizacion)}</td>
+                                <td className="py-1.5 px-0.5 text-right text-gray-600 truncate">{formatCurrency(row.capitalPendiente)}</td>
+                                {!isLeasing && <td className="py-1.5 px-0.5 text-right text-gray-600 truncate">{formatCurrency(row.capitalAmortizado)}</td>}
+                                {isLeasing && <td className="py-1.5 px-0.5 text-right text-gray-600 truncate">{formatCurrency(row.iva)}</td>}
+                                <td className="py-1.5 px-1 text-right font-bold text-caixa-blue truncate">{formatCurrency(row.cuotaTotal)}</td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Bottom Close Button - MOBILE ONLY */}
+            <div className="md:hidden pt-4 pb-2">
+                <button 
+                  onClick={() => (window as any).closeAmortizationModal?.()} 
+                  className="w-full bg-black text-white font-bold py-3 rounded-none uppercase tracking-widest text-xs"
+                >
+                    Cerrar Cuadro
+                </button>
             </div>
         </div>
     );

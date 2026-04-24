@@ -279,32 +279,47 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                     {children}
                   </div>
 
+                  {/* Floating Chatbot Assistant Icon - MOBILE ONLY */}
+                  <button
+                      onClick={onOpenChat}
+                      className="md:hidden fixed bottom-24 right-6 w-14 h-14 bg-black text-white rounded-full flex items-center justify-center shadow-2xl z-50 active:scale-95 transition-transform"
+                      aria-label="Asistente Quoter"
+                  >
+                      <ChatbotIcon className="w-6 h-6" />
+                  </button>
+
                   {/* Footer with Commercial Support data - only for non-sidebar part */}
-                  <footer className="bg-white border-t border-caixa-blue/20 py-2 px-6 md:px-8 shadow-[0_-4px_12px_rgba(0,161,224,0.05)]">
-                      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+                  <footer className="bg-slate-100 border-t border-caixa-blue/20 py-1 md:py-1.5 px-3 md:px-8 shadow-[0_-4px_12px_rgba(0,161,224,0.05)]">
+                      <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 md:gap-4">
                           {/* Logo and Title */}
-                          <div className="flex items-center gap-3">
-                              <div className="bg-slate-50 p-1.5 rounded-full ring-1 ring-slate-100 hidden sm:block">
+                          <div className="flex items-center gap-2 md:gap-3">
+                              <div className="bg-slate-50 p-1 md:p-1.5 rounded-full ring-1 ring-slate-100 hidden md:block">
                                   <svg viewBox="0 0 24 24" className="w-4 h-4 fill-black">
                                       <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
                                   </svg>
                               </div>
                               <div className="flex flex-col">
-                                  <h2 className="text-[8px] font-bold tracking-[0.15em] uppercase text-[#86868b] leading-none mb-0.5">Asistencia Comercial</h2>
-                                  <a href="tel:933203365" className="text-base font-bold tracking-tight text-[#1d1d1f] hover:text-caixa-blue transition-colors leading-none">933 203 365</a>
+                                  <h2 className="text-[6px] md:text-[8px] font-bold tracking-[0.05em] md:tracking-[0.15em] uppercase text-[#86868b] leading-none mb-0.5">Asistencia</h2>
+                                  <a href="tel:933203365" className="text-[11px] md:text-base font-bold tracking-tight text-[#1d1d1f] hover:text-caixa-blue transition-colors leading-none whitespace-nowrap">933 203 365</a>
                               </div>
                           </div>
 
                           {/* Options */}
-                          <div className="flex items-center gap-4 text-[9px]">
-                              <div className="flex items-center gap-2">
-                                  <span className="font-bold border border-black/10 px-1.5 py-0.5 bg-slate-50 uppercase text-[7px]">Pulsa 1</span>
-                                  <span className="font-medium text-[#1d1d1f] uppercase tracking-wide">Solicitudes en estudio</span>
+                          <div className="flex items-center gap-2 md:gap-4 text-[7px] md:text-[9px]">
+                              <div className="flex items-center gap-1 md:gap-2">
+                                  <span className="font-bold border border-black/10 px-1 py-0.5 md:px-1.5 md:py-0.5 bg-slate-50 uppercase text-[5px] md:text-[7px]">1</span>
+                                  <span className="font-medium text-[#1d1d1f] uppercase tracking-tighter md:tracking-wide">ESTUDIO</span>
                               </div>
-                              <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
-                                  <span className="font-bold border border-black/10 px-1.5 py-0.5 bg-slate-50 uppercase text-[7px]">Pulsa 2</span>
-                                  <span className="font-medium text-[#1d1d1f] uppercase tracking-wide">Aprobadas o nuevas</span>
+                              <div className="flex items-center gap-1 md:gap-2 border-l border-slate-200 pl-2 md:pl-4">
+                                  <span className="font-bold border border-black/10 px-1 py-0.5 md:px-1.5 md:py-0.5 bg-slate-50 uppercase text-[5px] md:text-[7px]">2</span>
+                                  <span className="font-medium text-[#1d1d1f] uppercase tracking-tighter md:tracking-wide">NUEVAS</span>
                               </div>
+                              <button 
+                                 onClick={() => setIsDealerModalOpen(true)}
+                                 className="flex items-center gap-1 md:gap-2 border-l border-slate-200 pl-2 md:pl-4 text-[7px] md:text-[9px] text-[#424245] uppercase font-medium bg-transparent hover:text-black transition-colors"
+                              >
+                                  VER CÓDIGOS DE CONCESIONARIO
+                              </button>
                           </div>
 
                           {/* Schedule */}

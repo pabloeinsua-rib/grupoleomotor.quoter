@@ -54,16 +54,6 @@ const ModificacionSolicitudes: React.FC<ModificacionSolicitudesProps> = ({ onNav
     return (
         <div className="w-full max-w-7xl mx-auto p-6 md:p-8 space-y-12 animate-fade-in bg-white min-h-full">
             
-            {/* Header */}
-            <div className="flex flex-col space-y-2">
-                <h1 className="text-3xl md:text-4xl font-light text-black tracking-tight">
-                    Modificar Solicitud
-                </h1>
-                <p className="text-sm font-semibold uppercase tracking-widest text-slate-400">
-                    Añadir cotitular, cambiar PVP, entrada, cuota o seguros
-                </p>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 
                 {/* Card for "En Estudio" */}
@@ -90,10 +80,10 @@ const ModificacionSolicitudes: React.FC<ModificacionSolicitudesProps> = ({ onNav
                         </a>
                         <button 
                             onClick={() => setIsDealerModalOpen(true)}
-                            className="w-full py-4 px-6 bg-white border border-slate-200 text-slate-800 font-bold text-xs uppercase tracking-widest rounded-none hover:border-black hover:text-black transition-colors flex items-center justify-center gap-2"
+                            className="w-full py-4 px-6 bg-white border border-black text-black font-bold text-xs uppercase tracking-widest rounded-none hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
                         >
                             <InfoIcon className="w-4 h-4"/>
-                            Códigos de Concesionario
+                            VER CÓDIGOS DE CONCESIONARIO
                         </button>
                     </div>
                 </div>
@@ -137,10 +127,10 @@ const ModificacionSolicitudes: React.FC<ModificacionSolicitudesProps> = ({ onNav
                         </button>
                         <button 
                             onClick={() => setIsDealerModalOpen(true)}
-                            className="w-full py-4 px-6 bg-white border border-slate-200 text-slate-800 font-bold text-xs uppercase tracking-widest rounded-none hover:border-black hover:text-black transition-colors flex items-center justify-center gap-2"
+                            className="w-full py-4 px-6 bg-white border border-black text-black font-bold text-xs uppercase tracking-widest rounded-none hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
                         >
                             <InfoIcon className="w-4 h-4"/>
-                            Códigos de Concesionario
+                            VER CÓDIGOS DE CONCESIONARIO
                         </button>
                     </div>
                 </div>

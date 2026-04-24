@@ -27,7 +27,8 @@ const PlateCameraModal = ({ onClose, onCapture }: { onClose: () => void, onCaptu
     const handleCapture = () => {
         setIsScanning(true);
         setTimeout(() => {
-            onCapture("5432 LXS"); // Mock captured plate
+            // Use current series for N plates or similar
+            onCapture("2345 NMD"); // Mock captured plate within data range (April 2026)
             onClose();
         }, 1500);
     };
@@ -147,23 +148,26 @@ const VehicleAgeCalculator = () => {
     }, [registrationYear, registrationMonth, productTab]);
 
     return (
-        <div className="bg-white p-8 md:p-10 rounded-none border border-slate-200 w-full max-w-xl mx-auto shadow-sm min-h-[460px] flex flex-col justify-between">
-            <div>
-                <div className="text-center mb-8">
-                    <h3 className="font-bold text-2xl tracking-widest text-black uppercase mb-3">Calculadora de Antigüedad</h3>
-                    <p className="text-slate-500 font-medium text-sm">Averigua instantáneamente el plazo máximo</p>
+        <div className="bg-white p-6 md:p-10 rounded-none border border-slate-200 w-full max-w-xl mx-auto shadow-sm min-h-[460px] flex flex-col justify-between overflow-hidden">
+            <div className="overflow-auto pb-4">
+                <div className="text-center mb-6 md:mb-8">
+                    <h3 className="font-bold text-xl md:text-2xl tracking-widest text-black uppercase mb-2 md:mb-3">Calculadora de Antigüedad</h3>
+                    <p className="text-slate-500 font-medium text-[9px] md:text-sm leading-relaxed px-2">
+                        Clic al botón cámara para sacarle una foto a la matrícula de un vehículo, o introduce la matrícula para ver la fecha de matriculación y el plazo máximo financiable, (no válido para vehículos rematriculados).
+                    </p>
                 </div>
                 
-                <div className="space-y-6">
-                    <div className="p-5 bg-slate-50 border border-slate-200">
-                        <label className="block text-xs font-bold text-black uppercase tracking-widest mb-4">Matrícula del Vehículo</label>
+                <div className="space-y-4 md:space-y-6">
+                    <div className="p-4 md:p-5 bg-slate-50 border border-slate-200">
+                        <label className="block text-[10px] font-bold text-black uppercase tracking-widest mb-3 md:mb-4">Matrícula del Vehículo</label>
                         <div className="flex gap-3">
                             <input 
                                 type="text" 
                                 value={licensePlate} 
                                 onChange={(e) => setLicensePlate(e.target.value.toUpperCase())}
-                                className="border border-slate-300 rounded-none px-4 py-3 w-full uppercase font-mono text-lg text-center tracking-[0.2em] focus:outline-none focus:border-black" 
+                                className="border border-slate-300 rounded-none px-4 py-3 w-full uppercase font-mono text-xs md:text-lg text-center tracking-[0.1em] md:tracking-[0.2em] focus:outline-none focus:border-black" 
                                 placeholder="0000BBB"
+                                maxLength={7}
                             />
                             <button onClick={handleSearchByPlate} className="bg-black text-white px-5 hover:bg-slate-800 transition-colors uppercase font-bold text-xs"><SearchIcon className="w-5 h-5"/></button>
                             <button onClick={() => setShowCameraModal(true)} className="bg-slate-200 text-black px-5 hover:bg-slate-300 border border-slate-300 transition-colors"><CameraIcon className="w-5 h-5"/></button>

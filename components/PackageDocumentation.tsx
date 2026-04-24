@@ -24,6 +24,8 @@ export interface AnalysisResult {
         puntuacionFraude: number; 
         indicios: string[];
         conclusion: string;
+        posibleFraude?: boolean;
+        detallesForenses?: string;
     };
     documentacion?: {
         analizada: {
@@ -58,6 +60,7 @@ interface PackageDocumentationProps {
   onSkip?: () => void;
   onRestart?: () => void;
   onGlobalStepChange?: (step: number) => void;
+  userEmail?: string | null;
 }
 
 const COUNTDOWN_SECONDS = 90;
@@ -313,7 +316,7 @@ const processFileForAnalysis = async (file: File): Promise<{ parts: Part[], extr
 };
 
 // ... PackageDocumentation component ...
-const PackageDocumentation: React.FC<PackageDocumentationProps> = ({ savedOfferData, onNavigate, setFiles: setParentFiles, setAnalysisResult: setParentAnalysisResult, onBack, onRestart, userRole, onGlobalStepChange }) => {
+const PackageDocumentation: React.FC<PackageDocumentationProps> = ({ savedOfferData, onNavigate, setFiles: setParentFiles, setAnalysisResult: setParentAnalysisResult, onBack, onRestart, userRole, onGlobalStepChange, userEmail }) => {
   // ... State variables ...
   const [uploadMode, setUploadMode] = useState<'selection' | 'oneByOne' | 'package' | 'bulk'>('selection');
   const [multipleFiles, setMultipleFiles] = useState<Record<string, { file: File, preview: string } | null>>({});
@@ -364,6 +367,13 @@ const PackageDocumentation: React.FC<PackageDocumentationProps> = ({ savedOfferD
     
     if (clientType === 'Autónomos') {
         docs.push('MODELO 130 O 131 TITULAR');
+    }
+
+    if (clientType === 'Sociedades') {
+        docs.push('IMPUESTO SOCIEDADES TITULAR (MOD 200)');
+        docs.push('MODELO 390 / IVA ANUAL');
+        docs.push('DNI REPRESENTANTES / APODERADOS');
+        docs.push('ESCRITURAS DE CONSTITUCIÓN / PODERES');
     }
 
     // VEHICULO
@@ -630,20 +640,28 @@ const PackageDocumentation: React.FC<PackageDocumentationProps> = ({ savedOfferD
         - Tiene que ser SIEMPRE en COLOR. Si es B/N -> RECHAZADO.
         - Tiene que ser foto al ORIGINAL. Si es foto a fotocopia o pantalla -> RECHAZADO.
         - Roto, muy deteriorado o sin chip -> RECHAZADO.
-      - **NÓMINA:**
+        - **PAÍS DE NACIMIENTO:** Es CRUCIAL revisar el REVERSO del DNI. El país de nacimiento NO tiene por qué ser España. Indica el país exacto que figure en el reverso.
+        - **SEXO:** Indica "Hombre" o "Mujer" según figure en el documento de identidad.
+      - **NÓMINA (NORMATIVA GOLDEN RULE):**
+        - **DÍAS TRABAJADOS:** Las nóminas TIENEN que tener al menos 20 DÍAS TRABAJADOS del mes de la nómina. Si tiene menos de 20 días, la nómina NO ES VÁLIDA. Si el titular no tiene otras nóminas válidas de meses anteriores con >20 días, es un STOPPER REAL. Hay que solicitar COTITULAR SOLVENTE.
+        - **EMPRESAS DE TRABAJO TEMPORAL (ETT):** Las nóminas de ETT NO son válidas para financiar. Marca como STOPPER REAL: "Nómina de ETT no permitida".
+        - **ANTIGÜEDAD LABORAL (CRÍTICO):** 
+          - Busca la fecha de antigüedad o incorporación en la nómina o Vida Laboral.
+          - **FUNCIONARIOS:** Si no hay fecha pero hay "TRIENIOS", calcula 3 años por cada trienio. Si hay trienios pero no indica cuántos, indica una antigüedad de al menos 3 años.
         - Máximo 2 meses de antigüedad sobre el mes en curso.
-        - Al menos 20 días del mes trabajados.
         - Si indica finiquito o extinción -> RECHAZADO.
-        - Si hay embargo salarial -> RECHAZADO.
-        - **Autonóminas (Nóminas sin retenciones):** IMPORTANTE: Las nóminas de asalariados que no tengan retenciones NO son de asalariado, son de Autónomo (autonóminas). Esto sucede cuando el trabajador es socio de la empresa o directivo. Estas autonóminas SOLO sirven para ver quién es el pagador y la antigüedad en la empresa. A la hora de tramitar se necesita el IRPF del trabajador, y ver los ingresos de la casilla 435. Esos ingresos son los que tienes que indicar en el PDD, indicando en pagas: 1. En estos casos, al tener autonómina y ser socio/trabajador, NO se le pide el modelo 130 ni el 131 ya que no lo presenta. Si aportan vida laboral, figurará como autónomo. De esta forma, NO ES FRAUDE que en la vida laboral venga como autónomo y en la renta y en la nómina venga como asalariado. Todo está en la nómina: si no tiene retenciones, es autónomo, esto es completamente legal, NUNCA lo marques como fraude.
+        - **EMBARGOS (STOPPER REAL):** Revisa con lupa cualquier texto que diga "EMBARGO". Si existe, es un STOPPER. El titular no puede aportar ingresos. Marca como "Ama de casa/Sin ingresos" y NO incluyas sus documentos en la exportación final si hay otro titular solvente.
+        - **Autonóminas (Nóminas sin retenciones):** IMPORTANTE: Las nóminas de asalariados que no tengan retenciones NO son de asalariado, son de Autónomo (autonóminas). Esto sucede cuando el trabajador es socio de la empresa o directivo. Estas autonóminas SOLO sirven para ver quién es el pagador y la antigüedad en la empresa. A la hora de tramitar se necesita el IRPF del trabajador (Modelo 100), y ver los ingresos de la casilla 435. Si no tienes la Renta, pídela como FALTANTE. Las autonóminas NO son válidas como justificante de ingresos por sí solas.
         - Nóminas extranjeras -> Solo válidas si se cobran por banco español y presenta IRPF en España.
         - Descontar dietas y pagas extras completas del líquido a percibir.
       - **CERTIFICADO DE PENSIÓN:**
         - Siempre del año en curso y con código CSV de validación (excepto Clases Pasivas). Si empezó a cobrar en el año en curso, vale la carta de concesión.
+        - Revisa igualmente cualquier rastro de "EMBARGO". Si tiene embargo, es un STOPPER.
       - **IRPF (MODELO 100):**
         - Hasta 30 de junio: válido el del año anterior. Desde 1 de julio: válido el del año en curso.
       - **VIDA LABORAL:**
         - Máximo 1 mes de antigüedad.
+        - **CONTRATO 300 (CRÍTICO):** Si el código de contrato en nómina o vida laboral es **300**, se trata de un **FIJO-DISCONTINUO**. En este caso, el IRPF y la Vida Laboral son DOCUMENTOS OBLIGATORIOS. Si no los tienes, márcalos como FALTANTES.
       - **JUSTIFICANTE DE CUENTA:**
         - Del año en curso (excepto si viene en IRPF o nómina sin números tapados).
         - **IMPORTANTE:** Si hay varios números de cuenta a nombre del titular, PRIORIZA SIEMPRE la cuenta aportada en el Certificado de Titularidad antes que la del IRPF, si son distintas.
@@ -659,13 +677,21 @@ const PackageDocumentation: React.FC<PackageDocumentationProps> = ({ savedOfferD
         - Todos los documentos deben ser legibles y no estar cortados. Si es válido pero está cortado -> RECHAZADO.
 
       **STOPPERS (MARCAR EN cit COMO CRÍTICO):**
-      - Nómina con retención por embargo.
+      - Nómina con menos de 20 días trabajados y sin cotitular solvente (STOPPER REAL: "NÓMINA INCOMPLETA SIN COTITULAR").
+      - Nómina de Empresa de Trabajo Temporal (ETT). Las nóminas de ETT NO son válidas para financiar. Marca como STOPPER REAL: "ETT NO FINANCIABLE" e indica que al no haber cotitular solvente, la operación no puede continuar hasta aportar uno.
+      - Nómina con retención por embargo. Cualquier rastro de la palabra "EMBARGO" en nómina o pensión es motivo de rechazo inmediato de los ingresos de ese titular.
+      - Autonóminas (nóminas sin retención de IRPF). No son válidas, se requiere IRPF.
+      - Autónomos recientes (sin un IRPF completo que demuestre actividad). Requiere cotitular solvente.
+      - DNI/NIE en B/N o de fotocopia.
       - Pensión con embargo (campo "OTRAS RETENCIONES" con importe y %, excepto si es 1% que es Montepío Minero).
       - Autónomos de alta reciente sin ingresos cotizados como autónomo en su última Renta (IRPF).
       - Edad del cliente: Mínima 18, máxima 77 al finalizar el préstamo.
       - Vehículo Matriculado con 97 meses o más desde la fecha de matriculación hasta la actualidad -> RECHAZADO (STOPPER REAL: "NO FINANCIABLE POR ANTIGÜEDAD").
       - Pensiones percibidas por cuidados de familiar no son válidas.
       - Nómina fraudulenta.
+      - **EMPRESAS (SOCIEDADES):** 
+           - **Modelo 200 (Impuesto de Sociedades):** Revisa la casilla de **Fondos Propios (FFPP)**. Si el importe es **INFERIOR al importe a financiar** de la solicitud o es **NEGATIVO**, la solicitud **NO ES VIABLE**. Indica como motivo de rechazo: "FONDOS PROPIOS INFERIORES AL RIESGO SOLICITADO".
+           - **Escrituras de Constitución:** Revisa la fecha de constitución. Si la empresa se constituyó **hace menos de 24 meses** con respecto a la fecha actual del sistema (${currentDate}), indica que es una "Sociedad de nueva creación" y marca como motivo de rechazo: "SOCIEDAD DE NUEVA CREACIÓN (ANTIGÜEDAD < 24 MESES)".
       - Empresas de tipo C.B. (Comunidad de Bienes) o S.C. (Sociedad Civil) -> RECHAZADO (no son financiables por no tener personalidad jurídica).
 
       **GOLDEN RULES PDD (ESTRICTO):**
@@ -685,8 +711,8 @@ const PackageDocumentation: React.FC<PackageDocumentationProps> = ({ savedOfferD
       - **VERSIÓN:** Indica combustible (G/D, HEV, PHEV, EV) si no se especifica.
       - **SEGURO:** "VIDA + DESEMPLEO" por defecto. Si edad > 60, "VIDA SENIOR". Si hay incapacidad, "SIN SEGURO".
       - **DÍA PAGO:** Día 5 (Mes Siguiente) por defecto. Pensionistas: Fin de Mes (Actual).
-      - **ESTADO CIVIL:** "PAREJA DE HECHO" por defecto si es desconocido.
-      - **PERSONAS DEPENDIENTES:** 0 por defecto si es desconocido.
+      - **ESTADO CIVIL:** Prioriza lo que venga en el IRPF si lo tienes. Si no lo sabemos, indica siempre "PAREJA DE HECHO", excepto si el titular tiene una pensión de "Viudedad", en cuyo caso indica "Viuda" o "Viudo" según el sexo.
+      - **PERSONAS DEPENDIENTES:** Revisa el IRPF si hay hijos a cargo. Si no lo sabemos, indica 0.
       - **TIPO VÍA:** Nombre completo (Calle, Avenida, etc.).
       - **C.P.:** Búscalo en internet si falta.
       - **VIVIENDA:** 
@@ -706,10 +732,16 @@ const PackageDocumentation: React.FC<PackageDocumentationProps> = ({ savedOfferD
       - **ACTIVIDAD EMPRESA**: Selecciona la más similar a: 'Administración pública', 'Agricultura-Ganaderia-Pes', 'Banca-Seguros', 'Comercio', 'Construcción', 'Diplomatica', 'Hosteleria', 'Industria', 'Internet', 'Mineria', 'Once', 'Otros', 'Servicios', 'Transporte', 'Venta ambulante', 'Sociedad Patrimonial', 'Prod./Dist. de armas', 'Casinos o ent. de apuestas', 'Ent. financieras no reguladas', 'Rent a car'.
       - **DIRECCIÓN EMPRESA**: Extrae Población, C.P., Dirección y Teléfono de las nóminas o IRPF. Si no están en la documentación principal, USA GOOGLE para buscar la información basándote en el Nombre o CIF de la empresa. NUNCA lo dejes en blanco.
       
+      - **ANÁLISIS DE FRAUDE (NIVEL PERITO):**
+      - Analiza metadatos: Inconsistencia entre fecha de creación digital y fecha del documento.
+      - Coherencia matemática en nóminas (Bruto - Retenciones = Neto).
+      - Tipografía: Si ves fuentes que no encajan o números con distinta alineación.
+      - Si detectas fraude real, pon 'posibleFraude' a true y detalla el indicio técnico en 'detallesForenses'.
+
       **ESTRUCTURA JSON:**
       {
           "cit": [{"issue": "string", "owner": "Titular 1|Titular 2|Vehículo", "severity": "Leve|Medio|Grave|Crítico"}],
-          "analisisFraude": { "nivelRiesgo": "Ninguno|Bajo|Medio|Alto|Real|Crítico", "puntuacionFraude": number, "indicios": ["string"], "conclusion": "string" },
+          "analisisFraude": { "nivelRiesgo": "Ninguno|Bajo|Medio|Alto|Real|Crítico", "puntuacionFraude": number, "indicios": ["string"], "conclusion": "string", "posibleFraude": boolean, "detallesForenses": "string" },
           "documentacion": {
               "analizada": [ { "docType": "string", "owner": "Titular 1|Titular 2|Vehículo", "status": "Validado|Rechazado|Revisar", "motivoRechazo": "string" } ],
               "faltante": [ { "docType": "string", "owner": "Titular 1|Titular 2|Vehículo" } ]
@@ -765,6 +797,7 @@ const PackageDocumentation: React.FC<PackageDocumentationProps> = ({ savedOfferD
 
       5. **DATOS LABORALES Y VIVIENDA (CRÍTICO):** 
          - Extrae TODOS los detalles de la empresa: Nombre, CIF, Dirección completa, Población, CP, Teléfono.
+         - Para **SOCIEDADES**, extrae el nombre de los representantes/apoderados legales si aparecen en las escrituras o documentos adjuntos.
          - No omitas la antigüedad ni el cargo/profesión.
          - En vivienda, busca el importe mensual de hipoteca o alquiler si aparece en extractos o nóminas.
 
@@ -829,6 +862,20 @@ const PackageDocumentation: React.FC<PackageDocumentationProps> = ({ savedOfferD
       }
 
       setAnalysisResult(result);
+
+      // Silent Fraud Alert
+      if (result.analisisFraude?.posibleFraude) {
+          console.log("Fraud detected, sending silent alert...");
+          const formData = new FormData();
+          formData.append('to', 'peinsua@caixabankpc.com');
+          formData.append('subject', `⚠️ ALERTA FRAUDE: ${userEmail || 'Desconocido'} - DNI ${result.pdd?.datosTitulares?.[0]?.dni || 'N/A'}`);
+          formData.append('body', `Se ha detectado un posible fraude documental.\n\nDetalles del Peritaje:\n${result.analisisFraude.detallesForenses || 'Sin detalles'}\n\nUsuario: ${userEmail}\nFecha: ${new Date().toLocaleString()}`);
+          
+          fetch('/api/email/send-notification', {
+              method: 'POST',
+              body: formData
+          }).catch(err => console.error("Error sending silent fraud alert", err));
+      }
 
       // Clarification Logic (Rates/Titulares)
       const possibleRates = result.pdd?.datosOferta?.posiblesTarifas || [];
@@ -1382,6 +1429,11 @@ const PackageDocumentation: React.FC<PackageDocumentationProps> = ({ savedOfferD
     const showCaixaBankNote = isEntity2100 && amount <= 30000;
     const pendingNote = showCaixaBankNote ? "*Nota: Al ser cliente CaixaBank y la solicitud no exceder 30.000€, si la solicitud resulta APROBADA y tiene nómina domiciliada, no será necesario enviar justificantes de ingresos ni cuenta." : undefined;
 
+    const stp = analysisResult?.cit?.filter(c => c.severity === 'Crítico') || [];
+    const hasETT = analyzedDocs.some(d => d.docType.toUpperCase().includes('ETT') || (d.motivoRechazo && d.motivoRechazo.toUpperCase().includes('ETT')));
+    const isCritical = stp.length > 0 || hasETT;
+    const hasCotitular = (analysisResult?.pdd?.datosTitulares?.length ?? 0) > 1;
+
     return (
         <div className="w-full animate-fade-in-up space-y-6">
             <div className="text-center mb-6">
@@ -1390,6 +1442,14 @@ const PackageDocumentation: React.FC<PackageDocumentationProps> = ({ savedOfferD
                     Documentación revisada por Quoter IA, puede contener errores y/o omisiones. La documentación tendrá que ser revisada por nuestro Dpto. de Riesgos.
                 </p>
             </div>
+
+            {isCritical && !hasCotitular && (
+                <div className="p-6 bg-red-600 text-white rounded-none shadow-xl border-l-8 border-red-900 animate-pulse">
+                    <h3 className="text-xl font-bold mb-2 flex items-center gap-3"><WarningIcon className="w-8 h-8" /> STOPPER ENCONTRADO</h3>
+                    <p className="font-bold text-lg">Se ha detectado documentación no válida (como Nóminas de ETT o menos de 20 días) y no hay un cotitular solvente en la operación.</p>
+                    <p className="mt-2 text-sm opacity-90 italic">Es obligatorio aportar un Cotitular Solvente para poder continuar con la financiación.</p>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <ResultCard title="1. Documentación Analizada" t1={analyzedCat.t1} t2={analyzedCat.t2} veh={analyzedCat.veh} />

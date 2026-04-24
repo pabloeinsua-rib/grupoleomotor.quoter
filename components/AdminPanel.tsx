@@ -83,6 +83,11 @@ const MessageSender: React.FC<{ onSendAdminNotification: (title: string, descrip
         e.preventDefault();
         if (!recipientEmail || !title || !description) return;
 
+        if (attachment && attachment.size > 4400000) {
+            setErrorMsg(`El archivo adjunto es demasiado grande (${(attachment.size / 1024 / 1024).toFixed(2)} MB). Vercel limita los envíos a 4.5MB.`);
+            return;
+        }
+
         setIsSending(true);
         setErrorMsg('');
 

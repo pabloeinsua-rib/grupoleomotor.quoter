@@ -102,6 +102,14 @@ const SupportRequestModal = ({
             }
         }
 
+        let totalSize = 0;
+        files.forEach(f => totalSize += f.size);
+        if (totalSize > 4400000) {
+            setError(`Los archivos adjuntos ocupan demasiado (${(totalSize / 1024 / 1024).toFixed(2)} MB). Vercel limita los envíos a 4.5MB. Por favor, usa archivos más pequeños o envía menos a la vez.`);
+            setIsSending(false);
+            return;
+        }
+
         setIsSending(true);
         setError('');
 
@@ -493,10 +501,10 @@ const CommercialSupport: React.FC<CommercialSupportProps> = ({ onNavigate, userI
                                 </a>
                                 <button 
                                     onClick={() => setIsDealerModalOpen(true)}
-                                    className="w-full sm:w-auto inline-flex items-center justify-center bg-white border border-slate-200 text-slate-600 font-bold py-4 px-6 rounded-none text-xs uppercase tracking-widest flex-shrink-0 hover:border-black hover:text-black transition-colors"
+                                    className="w-full sm:w-auto inline-flex items-center justify-center bg-white border border-black text-black font-bold py-4 px-6 rounded-none text-xs uppercase tracking-widest flex-shrink-0 hover:bg-slate-50 transition-colors"
                                 >
                                     <InfoIcon className="w-4 h-4 mr-2"/>
-                                    Códigos de Concesionario
+                                    VER CÓDIGOS DE CONCESIONARIO
                                 </button>
                             </div>
                             

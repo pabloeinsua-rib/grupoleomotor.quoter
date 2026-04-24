@@ -70,7 +70,7 @@ const GlassOptionButton: React.FC<{
         `}
     >
         {icon && <div className={`w-6 h-6 ${selected ? 'text-white' : 'text-black'}`}>{icon}</div>}
-        <span className="text-sm tracking-wide uppercase">{label}</span>
+        <span className="text-[9px] sm:text-xs tracking-tight uppercase leading-tight text-center break-words max-w-full">{label}</span>
     </button>
 );
 
@@ -84,8 +84,8 @@ const InsuranceSelectCard: React.FC<{
     <div 
         onClick={onClick}
         className={`
-            cursor-pointer relative p-3 rounded-none border-2 transition-all duration-300
-            flex flex-col justify-between h-28
+            cursor-pointer relative p-2 md:p-3 rounded-none border-2 transition-all duration-300
+            flex flex-col justify-between h-20 md:h-28
             ${selected 
                 ? 'bg-black border-black shadow-lg scale-[1.02]' 
                 : 'bg-white border-slate-200 hover:border-black hover:shadow-md'
@@ -93,10 +93,10 @@ const InsuranceSelectCard: React.FC<{
         `}
     >
         <div className="flex justify-between items-start">
-            <span className={`font-bold text-xs ${selected ? 'text-white' : 'text-black'} leading-tight`}>{title}</span>
-            {selected && <div className="w-4 h-4 bg-white text-black rounded-none flex items-center justify-center flex-shrink-0"><CheckIcon className="w-3 h-3"/></div>}
+            <span className={`font-bold text-[8px] sm:text-xs ${selected ? 'text-white' : 'text-black'} leading-[1.1]`}>{title}</span>
+            {selected && <div className="w-3 h-3 sm:w-4 sm:h-4 bg-white text-black rounded-none flex items-center justify-center flex-shrink-0 ml-0.5"><CheckIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3"/></div>}
         </div>
-        <div className={`text-[10px] font-semibold mt-1 leading-tight ${selected ? 'text-slate-300' : 'text-slate-500'}`}>{subtitle}</div>
+        <div className={`text-[8px] sm:text-[10px] font-semibold mt-0.5 leading-tight ${selected ? 'text-slate-300' : 'text-slate-500'} line-clamp-2`}>{subtitle}</div>
         <div className="mt-auto text-right">
              <button 
                 type="button"
@@ -104,7 +104,7 @@ const InsuranceSelectCard: React.FC<{
                     e.stopPropagation(); // Prevent selection when clicking info
                     onInfoClick();
                 }}
-                className={`text-[9px] font-bold px-2 py-0.5 rounded-none transition-colors z-10 relative ${selected ? 'bg-white text-black hover:bg-slate-200' : 'text-black bg-slate-100 hover:bg-slate-200'}`}
+                className={`text-[8px] font-bold px-1.5 py-0.5 rounded-none transition-colors z-10 relative ${selected ? 'bg-white text-black hover:bg-slate-200' : 'text-black bg-slate-100 hover:bg-slate-200'}`}
              >
                 +info
              </button>
@@ -449,6 +449,18 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
     const [showPensionerModal, setShowPensionerModal] = useState(false);
     const [isAmortizationModalOpen, setIsAmortizationModalOpen] = useState(false);
     
+    // Assign to window for child components to access
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            (window as any).closeAmortizationModal = () => setIsAmortizationModalOpen(false);
+        }
+        return () => {
+             if (typeof window !== 'undefined') {
+                delete (window as any).closeAmortizationModal;
+            }
+        };
+    }, []);
+    
     const [actionModalType, setActionModalType] = useState<'offer' | 'ine' | null>(null);
     const [showPdfViewer, setShowPdfViewer] = useState<{ type: 'offer' | 'ine', title: string, src?: string | null } | null>(null);
 
@@ -586,6 +598,10 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
 
         return { maxTerm, ageText, isFinanciable, message };
     }, [vehicleType, registrationYear, registrationMonth, currentYear, currentMonth, productType, clientType, vehicleUse]);
+
+    const isNoInsuranceScenario = useMemo(() => {
+        return productType === 'Leasing' || clientType === 'Sociedades';
+    }, [productType, clientType]);
 
     // Update term if it exceeds new max
     useEffect(() => {
@@ -890,7 +906,7 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
             let points = 0;
             let potentialPoints = 0;
             
-            const isEmpresa = clientType === 'Empresas';
+            const isEmpresa = clientType === 'Sociedades';
             const hasProteccionBasica = insuranceType === 'Vida' || insuranceType === 'Vida + Desempleo / IT' || insuranceType === 'Vida Senior';
             const hasProteccionDesempleo = insuranceType === 'Vida + Desempleo / IT';
             const antiguedad = vehicleType === 'Nuevo' ? 0 : ((currentYear - registrationYear) * 12 + (currentMonth - registrationMonth));
@@ -898,12 +914,14 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
             // Logic to calculate base points before checking insurance
             const calculatePoints = (basica: boolean, desempleo: boolean) => {
                 let p = 0;
-                if (principal >= 6000 && interestRate >= 5.45 && term > 35 && (isEmpresa || basica)) {
+                if (principal >= 6000 && interestRate >= 5.45 && term > 35 && (isNoInsuranceScenario || basica)) {
                     p += 30;
                     if (principal >= 10000) p += 40;
                     if (principal >= 15000) p += 60;
                     if (principal >= 24000) p += 30;
-                    if (desempleo) p += 40;
+                    
+                    // Empresa/Leasing get the "Protección" points by default since they can't hire it
+                    if (isNoInsuranceScenario || desempleo) p += 40;
                     
                     if (antiguedad + term <= 144) p += 10;
                     if (antiguedad + term <= 120) p += 20;
@@ -1001,6 +1019,10 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
                 }
             } else if (action === 'email') {
                 const blob = pdf.output('blob');
+                if (blob.size > 4400000) {
+                    onShowToast("Error", "PDF demasiado grande para enviar por email");
+                    return;
+                }
                 const file = new File([blob], filename, { type: 'application/pdf' });
                 const formData = new FormData();
                 formData.append('files', file);
@@ -1036,8 +1058,8 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
     return (
         <div className="w-full max-w-4xl mx-auto space-y-6 pb-20">
             {/* Step 0: Product */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 className="font-bold text-gray-800 mb-4">1. Selecciona Producto Financiero</h3>
+            <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h3 className="text-sm md:text-base font-bold text-gray-800 mb-4 uppercase tracking-widest">1. Selecciona Producto</h3>
                 <div className="grid grid-cols-2 gap-3">
                     <GlassOptionButton label="Financiación Lineal" selected={productType === 'Financiación Lineal'} onClick={() => handleProductSelect('Financiación Lineal')} />
                     <GlassOptionButton label="Leasing" selected={productType === 'Leasing'} onClick={() => handleProductSelect('Leasing')} />
@@ -1046,9 +1068,9 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
 
             {/* Step 1: Client */}
             {step >= 1 && (
-                <div ref={step1Ref} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-fade-in-up">
-                    <h3 className="font-bold text-gray-800 mb-4">2. Selecciona Tipo de Cliente</h3>
-                    <div className="flex gap-3">
+                <div ref={step1Ref} className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200 animate-fade-in-up">
+                    <h3 className="text-sm md:text-base font-bold text-gray-800 mb-4 uppercase tracking-widest">2. Tipo de Cliente</h3>
+                    <div className="grid grid-cols-2 sm:flex gap-2 sm:gap-3">
                         {productType !== 'Leasing' && <GlassOptionButton label="Asalariado" selected={clientType === 'Asalariados'} onClick={() => handleClientSelect('Asalariados')} />}
                         {productType !== 'Leasing' && <GlassOptionButton label="Pensionista" selected={clientType === 'Jubilados'} onClick={() => handleClientSelect('Jubilados')} />}
                         <GlassOptionButton label="Autónomo" selected={clientType === 'Autónomos'} onClick={() => handleClientSelect('Autónomos')} />
@@ -1084,8 +1106,8 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
 
             {/* Step 2: Vehicle */}
             {step >= 2 && (clientType !== 'Jubilados' || retirementType) && (
-                <div ref={step2Ref} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-fade-in-up">
-                    <h3 className="font-bold text-gray-800 mb-4">3. Selecciona Vehículo</h3>
+                <div ref={step2Ref} className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200 animate-fade-in-up">
+                    <h3 className="text-sm md:text-base font-bold text-gray-800 mb-4 uppercase tracking-widest">3. Vehículo</h3>
                     <div className="flex gap-3">
                         <GlassOptionButton label="Nuevo" selected={vehicleType === 'Nuevo'} onClick={() => handleVehicleSelect('Nuevo')} />
                         <GlassOptionButton label="Matriculado" selected={vehicleType === 'Matriculado'} onClick={() => handleVehicleSelect('Matriculado')} />
@@ -1216,14 +1238,16 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
 
             {/* Step 3: Financials */}
             {step >= 3 && vehicleAgeInfo.isFinanciable && (
-                <div ref={step3Ref} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 animate-fade-in-up space-y-6">
-                    <h3 className="font-bold text-gray-800">4. Selecciona Datos Económicos</h3>
+                <div ref={step3Ref} className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200 animate-fade-in-up space-y-4 md:space-y-6">
+                    <h3 className="text-sm md:text-base font-bold text-gray-800 uppercase tracking-widest">4. Datos Económicos</h3>
                     
                     <div>
                         <div className="flex justify-between items-center mb-4">
                             <label className="text-sm font-semibold">{productType === 'Leasing' ? 'Base Imponible (Sin IVA)' : 'Precio (PVP)'}</label>
                             <input 
                                 type="number" 
+                                inputMode="numeric"
+                                pattern="[0-9]*"
                                 value={salePrice} 
                                 onChange={(e) => {
                                     let val = Number(e.target.value);
@@ -1237,7 +1261,7 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
                             let val = Number(e.target.value);
                             if (val > 50000) val = Math.round(val / 5000) * 5000;
                             setSalePrice(val);
-                        }} className="w-full h-2 rounded-lg cursor-pointer" />
+                        }} className="hidden md:block w-full h-2 rounded-lg cursor-pointer" />
                     </div>
 
                     <div className="mt-8">
@@ -1245,12 +1269,14 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
                             <label className="text-sm font-semibold">{productType === 'Leasing' ? 'Entrada (IVA Incluido)' : 'Entrada'}</label>
                             <input 
                                 type="number" 
+                                inputMode="numeric"
+                                pattern="[0-9]*"
                                 value={downPayment} 
                                 onChange={(e) => setDownPayment(Number(e.target.value))} 
                                 className="text-2xl font-extrabold text-black text-right border-b border-gray-300 focus:border-black outline-none w-40"
                             />
                         </div>
-                        <input type="range" min="0" max={Math.max(0, Math.min(salePrice - 3000, salePrice * (productType === 'Leasing' ? 0.3 : 0.8)))} step="500" value={downPayment} onChange={(e) => setDownPayment(Number(e.target.value))} className="w-full h-2 rounded-lg cursor-pointer" />
+                        <input type="range" min="0" max={Math.max(0, Math.min(salePrice - 3000, salePrice * (productType === 'Leasing' ? 0.3 : 0.8)))} step="500" value={downPayment} onChange={(e) => setDownPayment(Number(e.target.value))} className="hidden md:block w-full h-2 rounded-lg cursor-pointer" />
                     </div>
 
                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex justify-between items-center">
@@ -1278,8 +1304,8 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
                     </div>
 
                     <div>
-                        <label className="text-sm font-semibold mb-2 block">T.I.N. (%)</label>
-                        <div className="grid grid-cols-4 sm:flex sm:flex-nowrap gap-2">
+                        <label className="text-xs font-semibold mb-2 block uppercase tracking-wider text-slate-500">T.I.N. (%)</label>
+                        <div className="grid grid-cols-5 sm:flex sm:flex-nowrap gap-1 sm:gap-2">
                             {availableRates.map(r => {
                                 let refValue: number | undefined = undefined;
                                 if (productType === 'Leasing') {
@@ -1322,7 +1348,29 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
                     </div>
 
                     {/* Insurance Selection - GRID LAYOUT */}
-                    {productType !== 'Leasing' ? (
+                    {(productType === 'Leasing' || clientType === 'Sociedades') ? (
+                        <div className="space-y-3">
+                            <h4 className="font-bold text-gray-800 text-sm">Seguro Protección de Pagos</h4>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="opacity-40 pointer-events-none">
+                                    <InsuranceSelectCard title="Vida + Desempleo / IT" subtitle="Cobertura Completa" selected={false} onClick={() => {}} onInfoClick={() => {}} />
+                                </div>
+                                <div className="opacity-40 pointer-events-none">
+                                    <InsuranceSelectCard title="Vida" subtitle="Fallecimiento e Invalidez" selected={false} onClick={() => {}} onInfoClick={() => {}} />
+                                </div>
+                                <div className="opacity-40 pointer-events-none">
+                                    <InsuranceSelectCard title="Vida Senior" subtitle="Mayores de 60 años" selected={false} onClick={() => {}} onInfoClick={() => {}} />
+                                </div>
+                                <div className="ring-2 ring-black">
+                                    <InsuranceSelectCard title="Sin Protección" subtitle="Sin seguro asociado" selected={true} onClick={() => {}} onInfoClick={() => setShowInsuranceModal({title: 'Sin Protección', content: insuranceContent.sinProteccion})} />
+                                </div>
+                            </div>
+                            <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg flex items-center gap-2">
+                                <InfoIcon className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                                <p className="text-[11px] font-bold text-amber-800 uppercase tracking-tight">Esta solicitud no puede llevar seguro asociado por el tipo de producto o cliente.</p>
+                            </div>
+                        </div>
+                    ) : (
                         <div>
                             <h4 className="font-bold text-gray-800 mb-3 text-sm">Seguro Protección de Pagos</h4>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1344,11 +1392,6 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
                                     * El tipo de seguro viene predeterminado por el tipo de jubilación.
                                 </p>
                             )}
-                        </div>
-                    ) : (
-                        <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg text-xs text-slate-600 text-center">
-                            <InfoIcon className="w-4 h-4 inline mr-1 text-caixa-blue"/>
-                            Las operaciones de Leasing no pueden llevar seguros asociados.
                         </div>
                     )}
                 </div>
@@ -1408,7 +1451,7 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
                                             Puntos Premium Program por esta solicitud: {premiumPoints}
                                         </span>
                                     </div>
-                                ) : (potentialPremiumPoints > 0 && (
+                                ) : (!isNoInsuranceScenario && potentialPremiumPoints > 0 && (
                                     <div className="mb-4 bg-slate-800 px-4 py-2 rounded-none border border-slate-700 flex flex-col items-center gap-1 w-full justify-center">
                                         <span className="text-white font-bold text-sm tracking-wide opacity-50">
                                             Puntos Premium Program por esta solicitud: 0
@@ -1486,7 +1529,7 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
                                             Puntos Premium Program por esta solicitud: {premiumPoints}
                                         </span>
                                     </div>
-                                ) : (potentialPremiumPoints > 0 && (
+                                ) : (!isNoInsuranceScenario && potentialPremiumPoints > 0 && (
                                     <div className="mb-6 bg-slate-800 px-4 py-2 rounded-none border border-slate-700 flex flex-col items-center gap-1 w-full justify-center">
                                         <span className="text-white font-bold text-sm tracking-wide opacity-50">
                                             Puntos Premium Program por esta solicitud: 0
@@ -1635,9 +1678,9 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
             
             {isAmortizationModalOpen && offerDetails && (
                 <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in-up">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-6 relative flex flex-col h-[90vh]">
-                        <button onClick={() => setIsAmortizationModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 rounded-none p-2 bg-slate-100 hover:bg-slate-200 transition-colors z-10"><XIcon className="w-5 h-5" /></button>
-                        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar relative">
+                    <div className="bg-white rounded-none shadow-2xl w-full max-w-4xl p-4 md:p-6 relative flex flex-col h-[90vh] md:h-[80vh]">
+                        <button onClick={() => setIsAmortizationModalOpen(false)} className="absolute top-2 right-2 text-slate-400 hover:text-white rounded-none p-2 bg-slate-100 hover:bg-black transition-all z-50"><XIcon className="w-5 h-5" /></button>
+                        <div className="flex-1 overflow-y-auto pr-0 custom-scrollbar relative">
                             <AmortizationTable 
                                 importeTotalCredito={offerDetails.importeTotalCredito}
                                 plazo={offerDetails.plazo}

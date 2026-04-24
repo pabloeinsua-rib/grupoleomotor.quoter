@@ -18,42 +18,49 @@ const InsuranceCoverageDetails: React.FC<InsuranceCoverageDetailsProps> = ({ ins
 
             <div className="space-y-6 text-xs text-slate-800 leading-relaxed font-sans flex-grow">
                 
-                {/* PACK VIDA */}
+                {/* VIDA + DESEMPLEO / IT */}
                 <div>
-                    <h3 className="text-sm font-bold text-slate-900 mb-2">COBERTURAS PACK VIDA</h3>
-                    
+                    <h3 className="text-sm font-bold text-slate-900 mb-2 uppercase">COBERTURAS VIDA + DESEMPLEO / IT</h3>
+                    <p className="mb-3 text-[10px] text-slate-500 italic">Cobertura Completa para el titular del préstamo.</p>
                     <div className="space-y-3">
                         <div>
-                            <h4 className="font-bold text-caixa-blue text-xs">Fallecimiento (F)</h4>
-                            <p>Proporciona al asegurado la garantía de liquidar el capital pendiente del préstamo en caso de fallecimiento, sea por enfermedad o accidente.</p>
+                            <h4 className="font-bold text-caixa-blue text-xs">Fallecimiento e Invalidez</h4>
+                            <p>Cubre la liquidación total del préstamo en caso de fallecimiento o invalidez absoluta y permanente del asegurado.</p>
                         </div>
                         <div>
-                            <h4 className="font-bold text-caixa-blue text-xs">Gran Invalidez (GI)</h4>
-                            <p>Proporciona al asegurado la garantía de liquidar el capital pendiente del préstamo en caso de gran invalidez, sea por enfermedad o accidente.</p>
+                            <h4 className="font-bold text-caixa-blue text-xs">Desempleo (Asalariados)</h4>
+                            <p>Cubre el pago de las cuotas mensuales en caso de pérdida involuntaria de empleo para trabajadores con contrato indefinido (hasta 6 cuotas consecutivas).</p>
                         </div>
                         <div>
-                            <h4 className="font-bold text-caixa-blue text-xs">Cáncer (CAN)</h4>
-                            <p>Proporciona al asegurado la garantía de liquidar el capital pendiente del préstamo en caso de diagnóstico de cáncer (tras 30 días de carencia).</p>
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-caixa-blue text-xs">Infarto de Miocardio (INF)</h4>
-                            <p>Proporciona al asegurado la garantía de liquidar el capital pendiente del préstamo en caso de que sufra un infarto de miocardio agudo, con muerte o necrosis de parte del músculo cardíaco producidas por un insuficiente aporte sanguíneo, siempre que hayan transcurrido más de 30 días desde la fecha de inicio de vigencia de la operación de seguro, y que no concurra supuesto de exclusión.</p>
+                            <h4 className="font-bold text-caixa-blue text-xs">Incapacidad Temporal (Autónomos)</h4>
+                            <p>Cubre el pago de las cuotas mensuales en caso de baja médica temporal para trabajadores autónomos o con contrato temporal (hasta 6 cuotas consecutivas).</p>
                         </div>
                     </div>
                 </div>
 
-                {/* PACK PROTECCIÓN */}
+                {/* VIDA */}
                 <div>
-                    <h3 className="text-sm font-bold text-slate-900 mb-2">COBERTURAS PACK PROTECCIÓN</h3>
-                    
+                    <h3 className="text-sm font-bold text-slate-900 mb-2 uppercase">COBERTURAS PACK VIDA</h3>
                     <div className="space-y-3">
                         <div>
-                            <h4 className="font-bold text-caixa-blue text-xs">Vida + Desempleo (D)</h4>
-                            <p>Cubre la pérdida del empleo para trabajadores por cuenta ajena indefinidos. Indemnización de la cuota (máx 400€/mes, 6 meses). Franquicia 30 días, Carencia 60 días.</p>
+                            <h4 className="font-bold text-caixa-blue text-xs">Fallecimiento e Invalidez</h4>
+                            <p>Garantiza la cancelación del capital pendiente del préstamo en caso de fallecimiento o invalidez absoluta y permanente.</p>
                         </div>
                         <div>
-                            <h4 className="font-bold text-caixa-blue text-xs">Vida + Incapacidad Temporal (IT)</h4>
-                            <p>Cubre la incapacidad temporal (baja médica) para Autónomos o temporales. Indemnización de la cuota (máx 400€/mes, 6 meses). Franquicia 30 días, Carencia 30 días.</p>
+                            <h4 className="font-bold text-caixa-blue text-xs">Enfermedades Graves</h4>
+                            <p>Cubre la cancelación del préstamo ante diagnósticos de Cáncer o Infarto de Miocardio (sujeto a periodos de carencia).</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* VIDA SENIOR */}
+                <div>
+                    <h3 className="text-sm font-bold text-slate-900 mb-2 uppercase">COBERTURAS VIDA SENIOR</h3>
+                    <p className="mb-3 text-[10px] text-slate-500 italic">Específico para clientes mayores de 60 años.</p>
+                    <div className="space-y-3">
+                        <div>
+                            <h4 className="font-bold text-caixa-blue text-xs">Fallecimiento</h4>
+                            <p>Cancela el capital pendiente del préstamo para evitar que la deuda recaiga sobre los herederos o familiares en caso de fallecimiento.</p>
                         </div>
                     </div>
                 </div>

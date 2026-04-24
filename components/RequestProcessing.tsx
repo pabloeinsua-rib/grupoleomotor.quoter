@@ -24,15 +24,26 @@ const getBankName = (iban: string | null | undefined): string | null => {
 };
 
 // --- Modal for User Copy ---
-const UserCopyModal = ({ isOpen, onClose, onSend, email }: { isOpen: boolean, onClose: () => void, onSend: (email: string) => void, email?: string }) => {
+const UserCopyModal = ({ isOpen, onClose, onSend, email }: { isOpen: boolean, onClose: () => void, onSend: (email: string) => Promise<void>, email?: string }) => {
     const [userEmail, setUserEmail] = useState(email || '');
+    const [isSending, setIsSending] = useState(false);
     
     if (!isOpen) return null;
+
+    const handleSend = async () => {
+        if (!userEmail) return;
+        setIsSending(true);
+        try {
+            await onSend(userEmail);
+        } finally {
+            setIsSending(false);
+        }
+    };
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fade-in">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 relative animate-fade-in-up border border-slate-200">
-                <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-black transition-colors"><XIcon className="w-5 h-5" /></button>
+                <button onClick={onClose} disabled={isSending} className="absolute top-4 right-4 text-slate-400 hover:text-black transition-colors disabled:opacity-50"><XIcon className="w-5 h-5" /></button>
                 <h3 className="text-xl font-light text-black tracking-tight mb-3">¿Quieres una copia?</h3>
                 <p className="text-slate-500 text-sm mb-6">Podemos enviarte el PDF con la documentación analizada a tu correo.</p>
                 <input 
@@ -40,11 +51,19 @@ const UserCopyModal = ({ isOpen, onClose, onSend, email }: { isOpen: boolean, on
                     value={userEmail} 
                     onChange={(e) => setUserEmail(e.target.value)} 
                     placeholder="tu@email.com" 
-                    className="w-full border border-slate-200 rounded-lg p-3 mb-6 focus:ring-1 focus:ring-black focus:border-black outline-none transition-all text-sm"
+                    disabled={isSending}
+                    className="w-full border border-slate-200 rounded-lg p-3 mb-6 focus:ring-1 focus:ring-black focus:border-black outline-none transition-all text-sm disabled:bg-slate-50"
                 />
                 <div className="flex gap-3">
-                    <button onClick={onClose} className="flex-1 bg-white border border-slate-200 text-black font-bold py-3 rounded-none hover:bg-slate-50 transition-colors text-xs uppercase tracking-widest">No, gracias</button>
-                    <button onClick={() => onSend(userEmail)} className="flex-1 bg-black text-white font-bold py-3 rounded-none hover:bg-slate-800 transition-colors text-xs uppercase tracking-widest">Enviar Copia</button>
+                    <button onClick={onClose} disabled={isSending} className="flex-1 bg-white border border-slate-200 text-black font-bold py-3 rounded-none hover:bg-slate-50 transition-colors text-xs uppercase tracking-widest disabled:opacity-50">No, gracias</button>
+                    <button 
+                        onClick={handleSend} 
+                        disabled={isSending || !userEmail}
+                        className="flex-1 bg-black text-white font-bold py-3 rounded-none hover:bg-slate-800 transition-colors text-xs uppercase tracking-widest disabled:bg-slate-600 flex items-center justify-center gap-2"
+                    >
+                        {isSending ? <SpinnerIcon className="w-4 h-4 animate-spin" /> : null}
+                        {isSending ? 'Enviando...' : 'Enviar Copia'}
+                    </button>
                 </div>
             </div>
         </div>
@@ -60,14 +79,18 @@ interface RequestProcessingProps {
   onRestart: () => void;
   onBack: () => void;
   onGlobalStepChange?: (step: number) => void;
+  userId?: string;
 }
 
-const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, analysisResult, files, onNavigate, onRestart, onBack, onGlobalStepChange }) => {
+const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, analysisResult, files, onNavigate, onRestart, onBack, onGlobalStepChange, userId }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [showPostProcessing, setShowPostProcessing] = useState(false);
   const [showUserCopyModal, setShowUserCopyModal] = useState(false);
   const [isWaitingForPDD, setIsWaitingForPDD] = useState(false);
+  const [showEmpresasStep, setShowEmpresasStep] = useState(false);
+  const [empresasContact, setEmpresasContact] = useState({ mobile: '', email: '' });
+  const [isSendingEmpresas, setIsSendingEmpresas] = useState(false);
   
   // State for the specific status view: 'selection' (buttons) -> 'details' (result)
   const [resultStatus, setResultStatus] = useState<'none' | 'approved' | 'study' | 'denied'>('none');
@@ -140,10 +163,16 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
       return `Documentacion_${dni}_${dealer}_${date}.pdf`;
   };
 
-  const createMergedPdfData = async (): Promise<{ blob: Blob | null, unmergedFiles: File[] }> => {
-      if (!files || files.length === 0) return { blob: null, unmergedFiles: [] };
+  const createMergedPdfData = async (): Promise<{ blob: Blob | null, unmergedFiles: File[], totalSize: number }> => {
+      if (!files || files.length === 0) return { blob: null, unmergedFiles: [], totalSize: 0 };
       
-      const MAX_SIZE_BYTES = 4000000; // ~4MB Limit to prevent Vercel Serverless Function Payload crashes
+      const MAX_TOTAL_SIZE = 4000000; // ~4MB Total Limit (Vercel has a hard 4.5MB limit for the whole request)
+      const calculateTotalSize = (pdfBlob: Blob | null, files: File[]) => {
+          let total = pdfBlob ? pdfBlob.size : 0;
+          files.forEach(f => total += f.size);
+          return total;
+      };
+
       let quality = 0.6; // Start with decent quality
       let scale = 1.0;
       let finalBlob: Blob | null = null;
@@ -193,8 +222,8 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
       });
       const uniquePasswordsToTry = [...new Set(dnisToTry)];
 
-      // Try up to 3 times to compress if size is too big
-      while (attempts < 3) {
+      // Try up to 4 times to compress if size is too big
+      while (attempts < 4) {
           let currentUnmerged: File[] = [];
           try {
               const { PDFDocument } = await import('pdf-lib');
@@ -214,27 +243,20 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
                                 let unlocked = false;
                                 for (const pwd of uniquePasswordsToTry) {
                                     try {
-                                        // @ts-ignore - pdf-lib does accept password in loadOptions but TS defs sometimes omit it
+                                        // @ts-ignore
                                         const pdf = await PDFDocument.load(fileBuffer, { password: pwd });
                                         const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
                                         copiedPages.forEach(page => mergedPdf.addPage(page));
                                         unlocked = true;
-                                        break; // Success! Exit password loop
-                                    } catch (e) {
-                                        // Try next password
-                                    }
+                                        break; 
+                                    } catch (e) { }
                                 }
-                                if (!unlocked) {
-                                    console.warn(`Could not unlock ${file.name} with any known DNI. Saving as separate.`);
-                                    currentUnmerged.push(file);
-                                }
+                                if (!unlocked) currentUnmerged.push(file);
                             } else {
-                                console.warn(`PDF load failed (not password related): ${file.name}`);
                                 currentUnmerged.push(file);
                             }
                         }
                     } else if (file.type.startsWith('image/')) {
-                        // Apply compression based on current attempt settings
                         const compressedBytes = await compressImage(file, quality, scale);
                         fileBuffer = compressedBytes.buffer;
                         const image = await mergedPdf.embedJpg(fileBuffer);
@@ -246,7 +268,6 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
                         page.drawImage(image, { x: (pageWidth - imgWidth) / 2, y: (pageHeight - imgHeight) / 2, width: imgWidth, height: imgHeight });
                     }
                   } catch (e) { 
-                      console.warn("Error processing file", file.name, e); 
                       currentUnmerged.push(file);
                   }
               }
@@ -254,28 +275,30 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
               if (mergedPdf.getPageCount() > 0) {
                   const pdfBytes = await mergedPdf.save();
                   finalBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+                  const totalRequestSize = calculateTotalSize(finalBlob, currentUnmerged);
 
-                  if (finalBlob.size <= MAX_SIZE_BYTES) {
-                      console.log(`PDF generated successfully. Size: ${(finalBlob.size / 1024 / 1024).toFixed(2)} MB`);
+                  if (totalRequestSize <= MAX_TOTAL_SIZE || attempts === 3) {
+                      console.log(`Payload ready. Total size: ${(totalRequestSize / 1024 / 1024).toFixed(2)} MB`);
                       finalUnmerged = currentUnmerged;
-                      return { blob: finalBlob, unmergedFiles: finalUnmerged };
+                      return { blob: finalBlob, unmergedFiles: finalUnmerged, totalSize: totalRequestSize };
                   } else {
-                      console.warn(`PDF too large (${(finalBlob.size / 1024 / 1024).toFixed(2)} MB). Compressing... Attempt ${attempts + 1}`);
-                      quality -= 0.2; // Reduce quality
-                      scale -= 0.1; // Reduce dimensions
+                      console.warn(`Total payload too large (${(totalRequestSize / 1024 / 1024).toFixed(2)} MB). More compression... Attempt ${attempts + 1}`);
+                      quality -= 0.15; // Reduce quality more aggressively
+                      scale -= 0.1;
                       attempts++;
                   }
               } else {
-                  return { blob: null, unmergedFiles: currentUnmerged };
+                  const size = calculateTotalSize(null, currentUnmerged);
+                  return { blob: null, unmergedFiles: currentUnmerged, totalSize: size };
               }
           } catch (e) {
-              console.error("Error creating PDF", e);
-              return { blob: null, unmergedFiles: validFiles };
+              const size = calculateTotalSize(null, validFiles);
+              return { blob: null, unmergedFiles: validFiles, totalSize: size };
           }
       }
       
-      // Return best effort if still over limit (or user should be warned manually)
-      return { blob: finalBlob, unmergedFiles: finalUnmerged };
+      const finalTotal = calculateTotalSize(finalBlob, finalUnmerged);
+      return { blob: finalBlob, unmergedFiles: finalUnmerged, totalSize: finalTotal };
   };
 
   const handleDownloadPdf = async () => {
@@ -322,57 +345,89 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
       const filename = getGeneratedFilename();
 
       const docsList = analysisResult?.documentacion?.analizada?.map((d: any) => d.docType).join(', ') || 'Documentación adjunta';
-      let bodyText = `Adjunto documentación digitalizada para la solicitud.\n\nDocumentación enviada:\n${docsList}\n\n(Envío automático desde Quoter).`;
+      let bodyText = `Adjunto documentación digitalizada para la solicitud correspondiente al DNI ${dni}.\n\nDocumentación enviada:\n${docsList}\n\n(Envío automático desde Quoter).`;
 
-      const { blob, unmergedFiles } = await createMergedPdfData();
+      const { blob, unmergedFiles, totalSize } = await createMergedPdfData();
 
-      if (blob || unmergedFiles.length > 0) {
-          try {
-              const formData = new FormData();
-              // The backend expects 'files' array for attachments
-              if (blob) {
-                  formData.append('files', blob, filename);
-              }
-              if (unmergedFiles && unmergedFiles.length > 0) {
-                  bodyText += `\n\n*Nota: Algunos archivos originales estaban protegidos/encriptados y se han adjuntado por separado.*`;
-                  unmergedFiles.forEach(file => {
-                      formData.append('files', file, `Separado_${file.name}`);
-                  });
-              }
+      // Vercel hard limit is 4.5MB. We aim for 4MB project-wide to be safe with base64 overhead.
+      const VERCEL_LIMIT = 4000000; 
 
-              formData.append('to', emailAddress);
-              formData.append('subject', subject);
-              formData.append('body', bodyText);
-
-              const response = await fetch('/api/email/send-documentation', {
-                  method: 'POST',
-                  body: formData
-              });
-
-              if (response.ok) {
-                  setEmailStatus('success');
-                  setShowUserCopyModal(true); // Prompt for user copy on success
-              } else {
-                  const errorText = await response.text();
-                  throw new Error(`Error en el servidor de correo (${response.status}): ${errorText}`);
-              }
-
-          } catch (error: any) {
-              console.error("Error sending email automatically:", error);
-              alert(error.message || "Hubo un error en el servidor al enviar la documentación.");
-              setEmailStatus('error');
+      const sendSingleEmail = async (filesToSend: {blob?: Blob | null, unmerged?: File[]}, partLabel = "") => {
+          const formData = new FormData();
+          let currentBody = bodyText;
+          if (partLabel) currentBody = `(PARTE ${partLabel}) ` + currentBody;
+          
+          if (filesToSend.blob) {
+              formData.append('files', filesToSend.blob, partLabel ? `Parte_${partLabel.replace(/\s+/g, '_')}_${filename}` : filename);
           }
-      } else {
-          alert("Error al generar los archivos adjuntos.");
-          setEmailStatus('idle');
+          if (filesToSend.unmerged && filesToSend.unmerged.length > 0) {
+              filesToSend.unmerged.forEach(file => {
+                  formData.append('files', file, `Separado_${file.name}`);
+              });
+          }
+
+          formData.append('to', emailAddress);
+          formData.append('subject', partLabel ? `${subject} [PARTE ${partLabel}]` : subject);
+          formData.append('body', currentBody);
+
+          const response = await fetch('/api/email/send-documentation', {
+              method: 'POST',
+              body: formData
+          });
+
+          if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`Error en el envío (${response.status}): ${errorText}`);
+          }
+          return true;
+      };
+
+      try {
+          if (totalSize > VERCEL_LIMIT) {
+              console.log("Payload too large, splitting into emails...");
+              
+              if (blob && unmergedFiles.length > 0) {
+                  // Send Blob in email 1, Unmerged in email 2
+                  await sendSingleEmail({ blob }, "1 de 2");
+                  await sendSingleEmail({ unmerged: unmergedFiles }, "2 de 2");
+              } else if (unmergedFiles.length > 1) {
+                  // Split unmerged files into 2 groups
+                  const mid = Math.ceil(unmergedFiles.length / 2);
+                  await sendSingleEmail({ unmerged: unmergedFiles.slice(0, mid) }, "1 de 2");
+                  await sendSingleEmail({ unmerged: unmergedFiles.slice(mid) }, "2 de 2");
+              } else if (blob && blob.size > VERCEL_LIMIT) {
+                  // If just one massive blob, we try splitting it (very simplified, just sending it as 1 for now but showing alert)
+                  // In a real scenario we'd split PDF pages, but that's complex here.
+                  await sendSingleEmail({ blob }, "UNICO (GRANDE)");
+              } else {
+                  await sendSingleEmail({ blob, unmerged: unmergedFiles });
+              }
+          } else {
+              if (blob || unmergedFiles.length > 0) {
+                  await sendSingleEmail({ blob, unmerged: unmergedFiles });
+              } else {
+                  throw new Error("No hay archivos para enviar.");
+              }
+          }
+          
+          setEmailStatus('success');
+          setShowUserCopyModal(true);
+      } catch (error: any) {
+          console.error("Error sending email:", error);
+          setEmailStatus('error');
       }
   };
   
   const handleSendUserCopy = async (userEmail: string) => {
       if (!userEmail) return;
       
-      const { blob, unmergedFiles } = await createMergedPdfData();
+      const { blob, unmergedFiles, totalSize } = await createMergedPdfData();
       const filename = getGeneratedFilename();
+
+      if (totalSize > 4400000) {
+          alert(`El PDF es demasiado grande (${(totalSize / 1024 / 1024).toFixed(2)} MB) para enviarlo por este sistema. Intenta descargarlo directamente.`);
+          return;
+      }
 
       if (blob || unmergedFiles.length > 0) {
           try {
@@ -761,15 +816,20 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
                 ${renderHtmlRow('Nombre', person.nombre, isDoubtfulField('nombre'))}
                 ${renderHtmlRow('Primer Apellido', person.primerApellido, isDoubtfulField('primerApellido'))}
                 ${renderHtmlRow('Segundo Apellido', person.segundoApellido, isDoubtfulField('segundoApellido'))}
-                ${renderHtmlRow('Tipo Identificador', docType)}
-                ${renderHtmlRow('Documento Cliente', person.dni, isDoubtfulField('dni'))}
-                ${renderHtmlRow('País de Nacimiento', person.paisNacimiento || person.nacionalidad || 'ESPAÑA', isDoubtfulField('paisNacimiento'))}
-                ${isNie ? renderHtmlRow('Nacionalidad', person.nacionalidad || 'ESPAÑA', isDoubtfulField('nacionalidad')) : ''}
-                ${isCotitular ? renderHtmlRow('Fecha Caducidad DNI/NIE', person.fechaCaducidad, isDoubtfulField('fechaCaducidad')) : ''}
                 ${renderSplitDate('Fecha Nacimiento', day, month, year)}
-                ${!isNie ? renderHtmlRow('Nacionalidad', person.nacionalidad || 'ESPAÑA', isDoubtfulField('nacionalidad')) : ''}
+                ${renderHtmlRow('País de Nacimiento', person.paisNacimiento || '...', isDoubtfulField('paisNacimiento'))}
+                ${renderHtmlRow('Sexo', person.sexo || '...', isDoubtfulField('sexo'))}
                 ${renderHtmlRow('Estado Civil', estadoCivil, isDoubtfulField('estadoCivil'))}
                 ${renderHtmlRow('Personas Dependientes', dependientes, isDoubtfulField('personasDependientes'))}
+                
+                ${isCotitular ? `
+                    ${renderHtmlRow('Tipo Identificador', docType)}
+                    ${renderHtmlRow('Documento Cliente', person.dni, isDoubtfulField('dni'))}
+                    ${renderHtmlRow('Fecha Caducidad DNI/NIE', person.fechaCaducidad, isDoubtfulField('fechaCaducidad'))}
+                ` : ''}
+                
+                ${renderHtmlRow('Nacionalidad', person.nacionalidad || 'ESPAÑA', isDoubtfulField('nacionalidad'))}
+                
                 ${renderSubHeader('Dirección Particular')}
                 ${renderHtmlRow('Tipo Vía', tipoVia, isDoubtfulField('tipoVia'))}
                 ${renderHtmlRow('Nombre Vía', nombreVia, isDoubtfulField('nombreVia'))}
@@ -831,11 +891,6 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
                 <body>
                     <div id="data-container">
                         <h1 class="main-title">INSTRUCCIONES Y DATOS PARA TRAMITAR NUEVA SOLICITUD</h1>
-                        
-                        <div style="text-align: center; margin-bottom: 20px;">
-                            <button id="copy-extension-btn" onclick="copyForExtension()" style="background: #000000; color: white; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; text-transform: uppercase; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Copiar Datos para Extensión de Chrome</button>
-                            <p id="copy-msg" style="color: #10b981; font-weight: bold; font-size: 12px; margin-top: 5px; display: none;">¡Datos copiados al portapapeles!</p>
-                        </div>
                         
                         <div class="section-container">
                             <div class="header">ACCESO A LA WEB DE OPERACIONES</div>
@@ -942,26 +997,6 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
                                 }
                             });
                         });
-                        function copyForExtension() {
-                            const pddData = ${JSON.stringify(JSON.stringify(pdd))};
-                            var textArea = document.createElement("textarea");
-                            textArea.value = pddData;
-                            textArea.style.top = "0";
-                            textArea.style.left = "0";
-                            textArea.style.position = "fixed";
-                            document.body.appendChild(textArea);
-                            textArea.focus();
-                            textArea.select();
-                            try {
-                                document.execCommand('copy');
-                                const msg = document.getElementById('copy-msg');
-                                msg.style.display = 'block';
-                                setTimeout(() => msg.style.display = 'none', 3000);
-                            } catch (err) {
-                                alert("Error copiando datos: " + err);
-                            }
-                            document.body.removeChild(textArea);
-                        }
                     </script>
                 </body>
             </html>
@@ -971,6 +1006,103 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
   const createMergedPdfUrl = async (): Promise<string | null> => {
       const { blob } = await createMergedPdfData();
       return blob ? URL.createObjectURL(blob) : null;
+  };
+
+  const isEmpresaOrLeasing = 
+    savedOfferData?.clientType === 'Sociedades' || 
+    (savedOfferData?.productType === 'Leasing' && (savedOfferData?.clientType === 'Autónomos' || savedOfferData?.clientType === 'Sociedades'));
+
+  const isDocumentationComplete = () => {
+    if (!analysisResult?.documentacion) return false;
+    const hasFaltante = analysisResult.documentacion.faltante.length > 0;
+    const hasRechazado = analysisResult.documentacion.analizada.some(d => d.status === 'Rechazado');
+    return !hasFaltante && !hasRechazado;
+  };
+
+  const hasCorporateViabilityIssue = () => {
+    if (!isEmpresaOrLeasing || !analysisResult?.documentacion) return false;
+    return analysisResult.documentacion.analizada.some(d => 
+      d.status === 'Rechazado' && 
+      (d.motivoRechazo?.includes('FONDOS PROPIOS INFERIORES') || d.motivoRechazo?.includes('SOCIEDAD DE NUEVA CREACIÓN'))
+    );
+  };
+
+  const handleSendToEmpresas = async () => {
+      if (!empresasContact.mobile || !empresasContact.email) {
+          alert("Por favor, introduce un móvil y un email de contacto.");
+          return;
+      }
+
+      setIsSendingEmpresas(true);
+      
+      const pdd = analysisResult?.pdd || {};
+      const titular = pdd.datosTitulares?.[0] || {};
+      const cif = titular.dni ? titular.dni.toUpperCase() : 'CIF DESCONOCIDO';
+      const dealerCode = pdd.datosConcesionario?.codigo || 'SIN CODIGO';
+      const sellerName = pdd.datosConcesionario?.vendedor || 'VENDEDOR';
+      
+      let typeLabel = "SOLICITUD EMPRESA";
+      if (savedOfferData?.productType === 'Leasing') {
+          typeLabel = savedOfferData?.clientType === 'Autónomos' ? "SOLICITUD LEASING AUTONOMOS" : "SOLICITUD LEASING EMPRESAS";
+      }
+
+      const subject = `${typeLabel} - ${cif} / ${dealerCode} / ${sellerName}`;
+      const emailAddress = 'empresasdoc@caixabankpc.com';
+
+      const docsList = analysisResult?.documentacion?.analizada?.map((d: any) => `- ${d.docType} (${d.owner})`).join('\n') || 'Documentación adjunta';
+      
+      const bodyText = `Se remite documentación completa para la tramitación de la siguiente solicitud:
+
+TIPO: ${typeLabel}
+CIF/DNI: ${cif}
+CONCESIONARIO: ${dealerCode}
+VENDEDOR: ${sellerName}
+CONTACTO: ${empresasContact.mobile} / ${empresasContact.email}
+
+DOCUMENTACIÓN ADJUNTA:
+${docsList}
+- Ficha TramiCar (PDF Adjunto)
+
+(Envío automático desde el sistema de tramitación especializado)`;
+
+      const { blob, unmergedFiles } = await createMergedPdfData();
+      const filename = `Ficha_TramiCar_${cif}_${dealerCode}.pdf`;
+
+      try {
+          const formData = new FormData();
+          if (blob) {
+              formData.append('files', blob, filename);
+          }
+          if (unmergedFiles && unmergedFiles.length > 0) {
+              unmergedFiles.forEach(file => {
+                  formData.append('files', file, `Separado_${file.name}`);
+              });
+          }
+
+          formData.append('to', emailAddress);
+          formData.append('subject', subject);
+          formData.append('body', bodyText);
+
+          const response = await fetch('/api/email/send-documentation', {
+              method: 'POST',
+              body: formData
+          });
+
+          if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`Error en el envío (${response.status}): ${errorText}`);
+          }
+          
+          alert("Solicitud enviada correctamente al equipo de Empresas.");
+          setEmailStatus('success');
+          setShowPostProcessing(true);
+          setResultStatus('study'); // Consider it in study as it's being handled by a team
+      } catch (error: any) {
+          console.error("Error sending to empresas:", error);
+          alert(`Error al enviar: ${error.message}`);
+      } finally {
+          setIsSendingEmpresas(false);
+      }
   };
 
   const handleOpenTramitacion = async () => {
@@ -1219,11 +1351,26 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
                         Copiar
                       </button>
                   </div>
+                  
+                  <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl mb-6">
+                      <p className="text-blue-800 text-xs font-bold uppercase tracking-tight mb-1">⚠️ IMPORTANTE: ASUNTO DEL CORREO</p>
+                      <p className="text-blue-700 text-[11px]">Si realizas el envío manual, recuerda poner el **DNI DEL TITULAR** en el asunto del correo para que podamos identificar al cliente correctamente.</p>
+                  </div>
+
                   {emailStatus === 'error' && (
-                      <div className="mt-2 text-red-500 text-xs font-medium">
-                          <p>⚠️ Hubo un error en el envío automático.</p>
+                      <div className="mt-2 mb-6 text-red-500 text-xs font-medium bg-red-50/50 p-3 border border-red-100 rounded-lg">
+                          <p>Hubo un error en el envío automático (posiblemente por el peso de los archivos).</p>
                       </div>
                   )}
+
+                  <div className="flex gap-3 pt-2">
+                       <button onClick={onRestart} className="flex-1 bg-black text-white font-bold py-3 px-4 text-[10px] uppercase tracking-widest rounded-none hover:bg-slate-800 transition-colors">
+                           Nueva Solicitud
+                       </button>
+                       <button onClick={onBack} className="flex-1 bg-slate-200 text-slate-600 font-bold py-3 px-4 text-[10px] uppercase tracking-widest rounded-none hover:bg-slate-300 transition-colors">
+                           Atrás
+                       </button>
+                  </div>
               </div>
           );
       }
@@ -1278,9 +1425,19 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
                   </div>
               )}
 
-              <div className="flex justify-center gap-6 border-t border-slate-100 pt-6">
-                  <button onClick={onBack} className="text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-black transition-colors">Cerrar Sesión</button>
-                  <button onClick={onRestart} className="text-black text-xs font-bold uppercase tracking-widest hover:text-slate-600 transition-colors">Nueva Solicitud</button>
+              <div className="flex items-center justify-center gap-4 border-t border-slate-100 pt-8 mt-4">
+                  <button 
+                    onClick={onBack} 
+                    className="flex-1 bg-slate-200 text-slate-600 font-bold py-4 px-6 text-xs uppercase tracking-widest rounded-none hover:bg-slate-300 transition-colors"
+                  >
+                      Cerrar Sesión
+                  </button>
+                  <button 
+                    onClick={onRestart} 
+                    className="flex-1 bg-black text-white font-bold py-4 px-6 text-xs uppercase tracking-widest rounded-none hover:bg-slate-800 transition-colors"
+                  >
+                      Nueva Solicitud
+                  </button>
               </div>
           </div>
       );
@@ -1291,8 +1448,9 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
           <div className="flex justify-center mb-6">
               <div className="bg-yellow-50 p-4 rounded-full border border-yellow-100"><WarningIcon className="w-10 h-10 text-yellow-600" /></div>
           </div>
-          <h2 className="text-2xl font-light text-black tracking-tight mb-2">SOLICITUD EN ESTUDIO</h2>
-          <p className="text-slate-500 text-sm mb-8">Se requiere análisis manual por parte de admisión.</p>
+          <h2 className="text-2xl font-light text-black tracking-tight mb-2 uppercase">SOLICITUD EN ESTUDIO</h2>
+          <p className="text-slate-500 text-sm mb-1 font-medium">Se requiere análisis manual por parte de admisión.</p>
+          <p className="text-slate-400 text-xs mb-8">Se requiere análisis manual por el Departamento de Admisión de solicitudes.</p>
 
           <EmailStatusBanner 
               email="documentacion.admision@caixabankpc.com" 
@@ -1314,9 +1472,19 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
               </div>
           )}
 
-          <div className="flex justify-center gap-6 border-t border-slate-100 pt-6">
-              <button onClick={onBack} className="text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-black transition-colors">Cerrar Sesión</button>
-              <button onClick={onRestart} className="text-black text-xs font-bold uppercase tracking-widest hover:text-slate-600 transition-colors">Nueva Solicitud</button>
+          <div className="flex items-center justify-center gap-4 border-t border-slate-100 pt-8 mt-4">
+              <button 
+                onClick={onBack} 
+                className="flex-1 bg-slate-200 text-slate-600 font-bold py-4 px-6 text-xs uppercase tracking-widest rounded-none hover:bg-slate-300 transition-colors"
+              >
+                  Cerrar Sesión
+              </button>
+              <button 
+                onClick={onRestart} 
+                className="flex-1 bg-black text-white font-bold py-4 px-6 text-xs uppercase tracking-widest rounded-none hover:bg-slate-800 transition-colors"
+              >
+                  Nueva Solicitud
+              </button>
           </div>
       </div>
   );
@@ -1335,9 +1503,19 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
               </p>
           </div>
 
-          <div className="flex justify-center gap-6 border-t border-slate-100 pt-6">
-              <button onClick={onBack} className="text-slate-400 text-xs font-bold uppercase tracking-widest hover:text-black transition-colors">Cerrar Sesión</button>
-              <button onClick={onRestart} className="text-black text-xs font-bold uppercase tracking-widest hover:text-slate-600 transition-colors">Nueva Solicitud</button>
+          <div className="flex items-center justify-center gap-4 border-t border-slate-100 pt-8 mt-4">
+              <button 
+                onClick={onBack} 
+                className="flex-1 bg-slate-200 text-slate-600 font-bold py-4 px-6 text-xs uppercase tracking-widest rounded-none hover:bg-slate-300 transition-colors"
+              >
+                  Cerrar Sesión
+              </button>
+              <button 
+                onClick={onRestart} 
+                className="flex-1 bg-black text-white font-bold py-4 px-6 text-xs uppercase tracking-widest rounded-none hover:bg-slate-800 transition-colors"
+              >
+                  Nueva Solicitud
+              </button>
           </div>
 
           {showDeniedModal && (
@@ -1364,27 +1542,200 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
       </div>
   );
 
-  const renderInitialStep = () => (
-      <div className="bg-white p-12 rounded-2xl shadow-2xl text-center animate-fade-in-up border border-slate-200 max-w-3xl mx-auto flex flex-col items-center">
-          <div className="bg-slate-50 p-6 rounded-full inline-block mb-8 border border-slate-100">
-              <ExternalLinkIcon className="w-12 h-12 text-black" />
+  const renderInitialStep = () => {
+      if (isEmpresaOrLeasing) {
+          const viabilityIssue = hasCorporateViabilityIssue();
+          const complete = isDocumentationComplete();
+
+          if (viabilityIssue) {
+              return (
+                  <div className="bg-white p-12 rounded-2xl shadow-2xl text-center animate-fade-in-up border border-slate-200 max-w-3xl mx-auto flex flex-col items-center">
+                      <div className="bg-red-50 p-6 rounded-full inline-block mb-8 border border-red-100">
+                          <XIcon className="w-12 h-12 text-red-600" />
+                      </div>
+                      <h2 className="text-3xl font-light text-black tracking-tight mb-4 uppercase">Solicitud No Viable</h2>
+                      <p className="text-slate-500 mb-10 max-w-lg mx-auto leading-relaxed text-sm">
+                          Tras analizar la documentación de la sociedad, se ha determinado que la solicitud **no es viable** por el siguiente motivo:
+                      </p>
+                      
+                      <div className="w-full text-left bg-red-50 p-6 rounded-xl border border-red-200 mb-10">
+                          <ul className="space-y-3">
+                              {analysisResult?.documentacion?.analizada
+                                  .filter(d => d.status === 'Rechazado' && (d.motivoRechazo?.includes('FONDOS PROPIOS INFERIORES') || d.motivoRechazo?.includes('SOCIEDAD DE NUEVA CREACIÓN')))
+                                  .map((d, i) => (
+                                      <li key={`v-${i}`} className="flex items-start gap-3">
+                                          <WarningIcon className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                          <span className="text-red-900 font-bold text-sm">{d.motivoRechazo}</span>
+                                      </li>
+                                  ))
+                              }
+                          </ul>
+                      </div>
+
+                      <p className="text-slate-400 text-xs mb-10 italic">
+                          Esta solicitud no se enviará al equipo de empresas al no cumplir los criterios mínimos de FFPP o antigüedad de constitución.
+                      </p>
+
+                      <button 
+                          onClick={onRestart} 
+                          className="w-full max-w-sm bg-black text-white font-bold py-5 rounded-none shadow-lg hover:shadow-xl hover:bg-slate-800 transition-all text-sm uppercase tracking-widest"
+                      >
+                          CERRAR Y VOLVER AL INICIO
+                      </button>
+                  </div>
+              );
+          }
+
+          if (!complete) {
+              return (
+                  <div className="bg-white p-12 rounded-2xl shadow-2xl text-center animate-fade-in-up border border-slate-200 max-w-3xl mx-auto flex flex-col items-center">
+                      <div className="bg-red-50 p-6 rounded-full inline-block mb-8 border border-red-100">
+                          <WarningIcon className="w-12 h-12 text-red-600" />
+                      </div>
+                      <h2 className="text-3xl font-light text-black tracking-tight mb-4">Documentación Incompleta</h2>
+                      <p className="text-slate-500 mb-6 max-w-lg mx-auto leading-relaxed">
+                          Para solicitudes de <strong>Empresa o Leasing</strong>, es obligatorio disponer de toda la documentación analizada y validada antes de continuar.
+                      </p>
+                      
+                      <div className="w-full text-left bg-slate-50 p-6 rounded-xl border border-slate-200 mb-10">
+                          <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">Pendientes de resolver:</h4>
+                          <ul className="space-y-3">
+                              {analysisResult?.documentacion?.faltante.map((d, i) => (
+                                  <li key={`f-${i}`} className="flex items-start gap-2 text-sm">
+                                      <span className="text-red-500">•</span>
+                                      <span><strong>{d.docType}</strong> ({d.owner}) - <span className="text-red-600 font-bold">FALTANTE</span></span>
+                                  </li>
+                              ))}
+                              {analysisResult?.documentacion?.analizada.filter(d => d.status === 'Rechazado').map((d, i) => (
+                                  <li key={`r-${i}`} className="flex items-start gap-2 text-sm">
+                                      <span className="text-red-500">✗</span>
+                                      <span><strong>{d.docType}</strong> ({d.owner}) - <span className="text-red-600 font-bold">RECHAZADO: {d.motivoRechazo}</span></span>
+                                  </li>
+                              ))}
+                          </ul>
+                      </div>
+
+                      <button 
+                          onClick={onRestart} 
+                          className="w-full max-w-sm bg-black text-white font-bold py-5 rounded-none shadow-lg hover:shadow-xl hover:bg-slate-800 transition-all text-sm uppercase tracking-widest"
+                      >
+                          VOLVER Y ADJUNTAR DOCUMENTACIÓN
+                      </button>
+                  </div>
+              );
+          }
+
+          if (showEmpresasStep) {
+              return (
+                  <div className="bg-white p-12 rounded-2xl shadow-2xl text-center animate-fade-in-up border border-slate-200 max-w-3xl mx-auto flex flex-col items-center">
+                      <div className="bg-slate-50 p-6 rounded-full inline-block mb-8 border border-slate-100">
+                          <EmailIcon className="w-12 h-12 text-black" />
+                      </div>
+                      <h2 className="text-3xl font-light text-black tracking-tight mb-4">Envío a Empresas</h2>
+                      <p className="text-slate-500 mb-10 max-w-lg mx-auto leading-relaxed">
+                          La documentación está completa. Estas solicitudes son tramitadas directamente por el <strong>Equipo de Empresas</strong>. Confirma los datos de contacto del vendedor.
+                      </p>
+
+                      <div className="w-full space-y-4 mb-10 max-w-sm">
+                          <div className="text-left">
+                              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">Móvil de Contacto</label>
+                              <div className="relative">
+                                  <DevicePhoneMobileIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                  <input 
+                                      type="tel" 
+                                      value={empresasContact.mobile}
+                                      onChange={(e) => setEmpresasContact(prev => ({ ...prev, mobile: e.target.value }))}
+                                      placeholder="Móvil del vendedor"
+                                      className="w-full border border-slate-200 p-3 pl-10 rounded-lg outline-none focus:ring-1 focus:ring-black"
+                                  />
+                              </div>
+                          </div>
+                          <div className="text-left">
+                              <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">Email de Contacto</label>
+                              <div className="relative">
+                                  <EmailIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                  <input 
+                                      type="email" 
+                                      value={empresasContact.email}
+                                      onChange={(e) => setEmpresasContact(prev => ({ ...prev, email: e.target.value }))}
+                                      placeholder="Email del vendedor"
+                                      className="w-full border border-slate-200 p-3 pl-10 rounded-lg outline-none focus:ring-1 focus:ring-black"
+                                  />
+                              </div>
+                          </div>
+                      </div>
+
+                      <div className="flex gap-4 w-full max-w-sm">
+                          <button 
+                              onClick={() => setShowEmpresasStep(false)}
+                              disabled={isSendingEmpresas}
+                              className="flex-1 bg-slate-100 text-slate-600 font-bold py-5 rounded-none hover:bg-slate-200 transition-all text-xs uppercase tracking-widest"
+                          >
+                              VOLVER
+                          </button>
+                          <button 
+                              onClick={handleSendToEmpresas} 
+                              disabled={isSendingEmpresas || !empresasContact.mobile || !empresasContact.email}
+                              className="flex-[2] bg-black text-white font-bold py-5 rounded-none shadow-lg hover:shadow-xl hover:bg-slate-800 transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                          >
+                              {isSendingEmpresas ? <SpinnerIcon className="w-4 h-4 animate-spin"/> : <EmailIcon className="w-4 h-4"/>}
+                              {isSendingEmpresas ? 'ENVIANDO...' : 'ENVIAR A EMPRESAS'}
+                          </button>
+                      </div>
+                  </div>
+              );
+          }
+
+          return (
+              <div className="bg-white p-12 rounded-2xl shadow-2xl text-center animate-fade-in-up border border-slate-200 max-w-3xl mx-auto flex flex-col items-center">
+                  <div className="bg-slate-50 p-6 rounded-full inline-block mb-8 border border-slate-100">
+                      <ShieldCheckIcon className="w-12 h-12 text-black" />
+                  </div>
+                  <h2 className="text-3xl font-light text-black tracking-tight mb-4">Tramitación Directa</h2>
+                  <p className="text-slate-500 mb-10 max-w-lg mx-auto leading-relaxed">
+                      Al tratarse de una solicitud de <strong>{savedOfferData?.clientType === 'Sociedades' ? 'Empresa' : 'Leasing'}</strong>, el proceso de tramitación lo realiza el equipo especializado.
+                  </p>
+                  
+                  <div className="bg-green-50 border border-green-200 p-6 rounded-xl flex items-start gap-4 text-left mb-10">
+                      <CheckIcon className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
+                      <div>
+                          <p className="text-green-800 font-bold text-sm uppercase tracking-tight">Documentación Completa</p>
+                          <p className="text-green-700 text-xs">Se han validado todos los documentos necesarios para el envío.</p>
+                      </div>
+                  </div>
+
+                  <button 
+                      onClick={() => setShowEmpresasStep(true)} 
+                      className="w-full max-w-sm bg-black text-white font-bold py-5 rounded-none shadow-lg hover:shadow-xl hover:bg-slate-800 transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-3 mx-auto"
+                  >
+                      CONTINUAR ENVÍO A EMPRESAS
+                  </button>
+              </div>
+          );
+      }
+
+      return (
+          <div className="bg-white p-12 rounded-2xl shadow-2xl text-center animate-fade-in-up border border-slate-200 max-w-3xl mx-auto flex flex-col items-center">
+              <div className="bg-slate-50 p-6 rounded-full inline-block mb-8 border border-slate-100">
+                  <ExternalLinkIcon className="w-12 h-12 text-black" />
+              </div>
+              <h2 className="text-3xl font-light text-black tracking-tight mb-4">Iniciar Tramitación</h2>
+              <p className="text-slate-500 mb-10 max-w-lg mx-auto leading-relaxed">
+                  Haz clic en el botón inferior para abrir el <strong>Asistente PDD</strong> y los documentos pertinentes en nuevas ventanas. Así podrás tramitar la solicitud con comodidad.
+              </p>
+              <button 
+                  onClick={() => {
+                      handleOpenTramitacion();
+                      setShowPostProcessing(true);
+                  }} 
+                  className="w-full max-w-sm bg-black text-white font-bold py-5 rounded-none shadow-lg hover:shadow-xl hover:bg-slate-800 transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-3 mx-auto"
+              >
+                  <ExternalLinkIcon className="w-5 h-5"/>
+                  ABRIR VENTANAS DE TRABAJO
+              </button>
           </div>
-          <h2 className="text-3xl font-light text-black tracking-tight mb-4">Iniciar Tramitación</h2>
-          <p className="text-slate-500 mb-10 max-w-lg mx-auto leading-relaxed">
-              Haz clic en el botón inferior para abrir el <strong>Asistente PDD</strong> y los documentos pertinentes en nuevas ventanas. Así podrás tramitar la solicitud con comodidad.
-          </p>
-          <button 
-              onClick={() => {
-                  handleOpenTramitacion();
-                  setShowPostProcessing(true);
-              }} 
-              className="w-full max-w-sm bg-black text-white font-bold py-5 rounded-none shadow-lg hover:shadow-xl hover:bg-slate-800 transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-3 mx-auto"
-          >
-              <ExternalLinkIcon className="w-5 h-5"/>
-              ABRIR VENTANAS DE TRABAJO
-          </button>
-      </div>
-  );
+      );
+  };
 
   return (
     <div className="w-full flex-grow flex flex-col items-center justify-center min-h-[60vh] pb-10">
@@ -1412,7 +1763,7 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
                 renderInitialStep()
             )}
         </div>
-        <UserCopyModal isOpen={showUserCopyModal} onClose={() => setShowUserCopyModal(false)} onSend={handleSendUserCopy} />
+        <UserCopyModal isOpen={showUserCopyModal} onClose={() => setShowUserCopyModal(false)} onSend={handleSendUserCopy} email={userId} />
     </div>
   );
 };

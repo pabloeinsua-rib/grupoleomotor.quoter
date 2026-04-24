@@ -304,6 +304,7 @@ const NewRequestWorkflow: React.FC<NewRequestWorkflowProps> = ({
                             onSkip={handleDocsAnalyzed}
                             onRestart={handleRestart}
                             onGlobalStepChange={setGlobalStep}
+                            userEmail={userId}
                         />
                     </div>
                  );
@@ -318,6 +319,7 @@ const NewRequestWorkflow: React.FC<NewRequestWorkflowProps> = ({
                             onRestart={handleRestart}
                             onBack={handleBack}
                             onGlobalStepChange={setGlobalStep}
+                            userId={userId}
                         />
                     </div>
                 );

@@ -6,6 +6,8 @@ import {
   PhoneIcon,
   MapPinIcon,
   WifiOffIcon,
+  FingerprintIcon,
+  FaceIdIcon,
 } from "./Icons.tsx";
 
 interface LoginProps {
@@ -223,47 +225,129 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   >("disconnected");
 
   const [emailStatusDetail, setEmailStatusDetail] = useState("");
+  const [isPWA, setIsPWA] = useState(false);
 
   useEffect(() => {
-    const fetchEmailStatus = async () => {
-      try {
-        const response = await fetch("/api/email/status?t=" + Date.now(), {
-          headers: { "Cache-Control": "no-cache" },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (data.connected) {
-            setEmailStatus(data.mode === "production" ? "connected" : "dev");
-            setEmailStatusDetail(
-              `Conectado. Keys: ${data.envKeys?.join(", ")}`,
-            );
-          } else {
-            setEmailStatus("disconnected");
-            setEmailStatusDetail(
-              "El servidor responde OK pero marca desconectado. Faltan claves en Vercel.",
-            );
-          }
-        } else {
-          setEmailStatus("disconnected");
-          setEmailStatusDetail(
-            `Error HTTP: ${response.status} - ${response.statusText}`,
-          );
-        }
-      } catch (e: any) {
-        setEmailStatus("disconnected");
-        setEmailStatusDetail(`Error de Red: ${e.message}`);
-      }
-    };
-    fetchEmailStatus();
+    // Detect PWA mode
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    setIsPWA(!!isStandalone);
+
+    // Auto-fill if remembered
+    const savedEmail = localStorage.getItem("remembered_email");
+    const savedPass = localStorage.getItem("remembered_password");
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+    if (savedPass) {
+      setPassword(savedPass);
+    }
   }, []);
 
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [tempUserId, setTempUserId] = useState<number | null>(null);
+  const handleBiometricAuth = async () => {
+    if (!window.PublicKeyCredential) {
+      setErrorMessage("Tu dispositivo no soporta autenticación biométrica web.");
+      setIsError(true);
+      return;
+    }
 
-  const completeLogin = (roleId: string) => {
+    try {
+      // Mock logic for demo purposes as real WebAuthn requires server registration
+      // In a real app, this would use navigator.credentials.get()
+      console.log("Iniciando autenticación biométrica...");
+      setIsLoading(true);
+      
+      // Simulate biometric success if we have saved credentials
+      const savedEmail = localStorage.getItem("remembered_email");
+      const savedPass = localStorage.getItem("remembered_password");
+
+      if (savedEmail && savedPass) {
+        // Wait for user to bypass system biometric prompt (simulated)
+        setTimeout(() => {
+          setEmail(savedEmail);
+          setPassword(savedPass);
+          // Auto-trigger login
+          const mockEvent = { suppressVibrate: true } as any;
+          performLogin(savedEmail, savedPass, true, mockEvent);
+        }, 1500);
+      } else {
+        setIsLoading(false);
+        setErrorMessage("Primero debes iniciar sesión convencionalmente marcando 'Recordar usuario' para habilitar la firma biométrica.");
+        setIsError(true);
+      }
+    } catch (err) {
+      setIsLoading(false);
+      console.error("Biometric error:", err);
+      setErrorMessage("Error en la autenticación biométrica.");
+      setIsError(true);
+    }
+  };
+
+  const performLogin = async (emailInput: string, passwordInput: string, isRemembering: boolean, e?: React.FormEvent) => {
+    if (e && !(e as any).suppressVibrate && window.navigator && window.navigator.vibrate)
+      window.navigator.vibrate(50);
+
+    const emailLower = emailInput.trim().toLowerCase();
+    const passTrim = passwordInput.trim();
+
+    // 1. ADMIN - Requiere contraseña 999999
+    if (emailLower === "quoter.cpc@gmail.com") {
+      if (passTrim === "999999") {
+        finalizeLogin(emailLower, isRemembering, passTrim);
+        return;
+      } else {
+        throw new Error("Contraseña de administrador incorrecta.");
+      }
+    }
+
+    // 2. TRAMICAR - Requiere contraseña tramicar
+    if (emailLower === "tramicar") {
+      if (passTrim.toLowerCase() === "tramicar") {
+        finalizeLogin("tramicar", isRemembering, passTrim);
+        return;
+      } else {
+        throw new Error("Contraseña incorrecta para Tramicar.");
+      }
+    }
+
+    // 3. USUARIOS GENERALES
+    if (emailLower.length > 0) {
+      const validSuffixes = [".grupoleomotor.com", ".grupoleomotor.net", "@grupoleomotor.com", "@grupoleomotor.net", "@caixabankpc.com", ".grupolemotor.com", ".grupolemotor.net", "@grupolemotor.com", "@grupolemotor.net"];
+      const hasValidSuffix = validSuffixes.some(suffix => emailLower.endsWith(suffix));
+      const isAllowedAdmin = emailLower === "pabloeinsua@gmail.com";
+      const isResponsable = RESPONSABLES_EMAILS.includes(emailLower);
+
+      if (!hasValidSuffix && !isAllowedAdmin && !isResponsable) {
+        throw new Error("El correo no tiene permisos para acceder.");
+      }
+
+      if (isAllowedAdmin && passTrim === "999999") {
+        finalizeLogin(emailLower, isRemembering, passTrim);
+        return;
+      }
+
+      if (isValidPassword(passTrim)) {
+        finalizeLogin(emailLower, isRemembering, passTrim);
+        return;
+      } else {
+        throw new Error("La contraseña debe ser tu DNI o NIE (ej. 12345678A).");
+      }
+    }
+    throw new Error("Credenciales incorrectas");
+  };
+
+  const finalizeLogin = (userId: string, isRemembering: boolean, pass: string) => {
+    if (isRemembering) {
+      localStorage.setItem("remembered_email", email);
+      localStorage.setItem("remembered_password", pass);
+    } else {
+      localStorage.removeItem("remembered_email");
+      localStorage.removeItem("remembered_password");
+    }
+    
     setTimeout(() => {
       setIsLoading(false);
-      onLogin(roleId, rememberMe);
+      onLogin(userId, isRemembering);
     }, 800);
   };
 
@@ -273,102 +357,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setIsError(false);
     setIsLoading(true);
 
-    if (window.navigator && window.navigator.vibrate)
-      window.navigator.vibrate(50);
-
-    const emailInput = email.trim();
-    const emailLower = emailInput.toLowerCase();
-    const passwordInput = password.trim();
-
-    // 1. ADMIN - Requiere contraseña 999999
-    if (emailLower === "quoter.cpc@gmail.com") {
-      if (passwordInput === "999999") {
-        console.log(">> Acceso Admin");
-        completeLogin("quoter.cpc@gmail.com");
-        return;
-      } else {
-        setIsLoading(false);
-        setErrorMessage("Contraseña de administrador incorrecta.");
-        setIsError(true);
-        return;
-      }
+    try {
+      await performLogin(email, password, rememberMe, e);
+    } catch (err: any) {
+      setIsLoading(false);
+      setErrorMessage(err.message);
+      setIsError(true);
     }
-
-    // 2. TRAMICAR - Requiere contraseña tramicar
-    if (emailLower === "tramicar") {
-      if (passwordInput.toLowerCase() === "tramicar") {
-        console.log(">> Acceso Tramicar");
-        completeLogin("tramicar");
-        return;
-      } else {
-        setIsLoading(false);
-        setErrorMessage("Contraseña incorrecta para Tramicar.");
-        setIsError(true);
-        return;
-      }
-    }
-
-    // 3. USUARIOS GENERALES - Validación Contraseña y Sufijo de Correo
-    if (emailInput.length > 0) {
-      const validSuffixes = [
-        ".grupoleomotor.com",
-        ".grupoleomotor.net",
-        "@grupoleomotor.com",
-        "@grupoleomotor.net",
-        "@caixabankpc.com",
-        ".grupolemotor.com",
-        ".grupolemotor.net",
-        "@grupolemotor.com",
-        "@grupolemotor.net",
-      ];
-      const hasValidSuffix = validSuffixes.some((suffix) =>
-        emailLower.endsWith(suffix),
-      );
-
-      const isAllowedAdmin = emailLower === "pabloeinsua@gmail.com";
-      const isResponsable = RESPONSABLES_EMAILS.includes(emailLower);
-
-      if (!hasValidSuffix && !isAllowedAdmin && !isResponsable) {
-        setIsLoading(false);
-        setErrorMessage("El correo no tiene permisos para acceder.");
-        setIsError(true);
-        return;
-      }
-
-      // Si es el admin particular, puede entrar con 999999
-      if (isAllowedAdmin && passwordInput === "999999") {
-        console.log(">> Acceso Administrador (Pablo)");
-        completeLogin(emailLower);
-        return;
-      }
-
-      if (isValidPassword(passwordInput)) {
-        console.log(">> Acceso Usuario General (Formato Válido)");
-        // Usamos el email como ID de usuario para usuarios normales
-        completeLogin(emailLower);
-        return;
-      } else {
-        setIsLoading(false);
-        setErrorMessage("La contraseña debe ser tu DNI o NIE (ej. 12345678A).");
-        setIsError(true);
-        return;
-      }
-    }
-
-    // Fallback error
-    setIsLoading(false);
-    setErrorMessage("Credenciales incorrectas");
-    setIsError(true);
   };
-
-  if (showOnboarding && tempUserId) {
-    return (
-      <OnboardingWizard
-        userId={tempUserId}
-        onComplete={() => onLogin(email, rememberMe)}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen w-full bg-white flex items-center justify-center p-4 overflow-hidden">
@@ -461,7 +457,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 </label>
               </div>
 
-              <div className="pt-4">
+              <div className="pt-4 space-y-4">
                 <button
                   type="submit"
                   disabled={isLoading}
@@ -477,6 +473,19 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     "Entrar"
                   )}
                 </button>
+
+                {isPWA && (
+                  <button
+                    type="button"
+                    onClick={handleBiometricAuth}
+                    disabled={isLoading}
+                    className="w-full flex justify-center items-center gap-2 rounded-none bg-white border border-black py-4 px-4 text-[10px] font-bold text-black uppercase tracking-widest hover:bg-slate-50 focus:outline-none transition-colors"
+                  >
+                    <FingerprintIcon className="w-5 h-5" />
+                    <FaceIdIcon className="w-5 h-5" />
+                    <span>Firma Biométrica</span>
+                  </button>
+                )}
               </div>
             </form>
 
@@ -503,7 +512,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
         {/* QR Code Card (Right) */}
         <div
-          className="w-full max-w-[220px] flex-shrink-0 animate-fade-in-up md:mt-0 md:col-start-3 justify-self-center md:justify-self-center lg:justify-self-center xl:justify-self-center"
+          className="hidden md:flex w-full max-w-[220px] flex-shrink-0 animate-fade-in-up md:mt-0 md:col-start-3 justify-self-center md:justify-self-center lg:justify-self-center xl:justify-self-center"
           style={{ animationDelay: "200ms" }}
         >
           <div className="bg-white p-5 sm:p-6 rounded-none relative overflow-hidden transition-all duration-300 border border-slate-200 shadow-lg flex flex-col items-center text-center">

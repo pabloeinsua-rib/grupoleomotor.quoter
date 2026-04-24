@@ -1,12 +1,29 @@
 
-import React from 'react';
-import { CheckCircleIcon, WarningIcon, PhoneIcon, SearchIcon, PersonIcon, TeamIcon, EmailIcon, ShieldCheckIcon, LightbulbIcon } from './Icons.tsx';
+import React, { useState } from 'react';
+import { CheckCircleIcon, WarningIcon, PhoneIcon, SearchIcon, PersonIcon, TeamIcon, EmailIcon, ShieldCheckIcon, LightbulbIcon, CameraIcon } from './Icons.tsx';
+import type { View } from '../App.tsx';
 
-const FraudPrevention: React.FC = () => {
+interface FraudPreventionProps {
+    onNavigate?: (view: View) => void;
+}
+
+const FraudPrevention: React.FC<FraudPreventionProps> = ({ onNavigate }) => {
     return (
         <div className="w-full">
-            <div className="max-w-5xl mx-auto bg-white p-8 rounded-2xl shadow-2xl border border-slate-200 mt-10">
-                <div className="aspect-video bg-black rounded-xl shadow-lg overflow-hidden mb-12 max-w-4xl mx-auto border border-slate-200">
+            <div className="max-w-5xl mx-auto bg-white p-4 md:p-8 rounded-2xl shadow-2xl border border-slate-200 mt-6 md:mt-10">
+                
+                {/* Mobile-only Plate Photo Button */}
+                <div className="md:hidden mb-6">
+                    <button 
+                        onClick={() => onNavigate?.('utilidades')}
+                        className="w-full flex items-center justify-center gap-3 bg-caixa-blue text-white font-bold py-4 rounded-none uppercase tracking-widest text-xs shadow-lg active:scale-[0.98] transition-transform"
+                    >
+                        <CameraIcon className="w-5 h-5" />
+                        Foto-Matrícula
+                    </button>
+                </div>
+
+                <div className="aspect-video bg-black rounded-xl shadow-lg overflow-hidden mb-8 md:mb-12 max-w-4xl mx-auto border border-slate-200">
                     <iframe 
                         src="https://player.vimeo.com/video/1185576513?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" 
                         title="Guía Antifraude en FINANCIACION en Concesionarios" 

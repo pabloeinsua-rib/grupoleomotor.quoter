@@ -41,202 +41,232 @@ const FeatureCard: React.FC<{
 );
 
 const InsuranceCoverage: React.FC = () => {
+  const [activeInfo, setActiveInfo] = React.useState<string | null>(null);
+
+  const getInfoContent = () => {
+    switch(activeInfo) {
+      case 'completa':
+        return {
+          title: "Vida + Desempleo / IT",
+          content: (
+            <div className="space-y-4">
+              <p>Esta es la protección más completa disponible. Cubre tanto situaciones personales como laborales.</p>
+              <ul className="space-y-3">
+                <li className="flex gap-2">
+                  <div className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 shrink-0" />
+                  <p><strong>Fallecimiento e Invalidez:</strong> Liquidación total del capital pendiente.</p>
+                </li>
+                <li className="flex gap-2">
+                  <div className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 shrink-0" />
+                  <p><strong>Desempleo:</strong> Cobertura de cuotas para trabajadores asalariados indefinidos.</p>
+                </li>
+                <li className="flex gap-2">
+                  <div className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 shrink-0" />
+                  <p><strong>Incapacidad Temporal:</strong> Cobertura de cuotas para autónomos y empleados temporales.</p>
+                </li>
+              </ul>
+            </div>
+          )
+        };
+      case 'vida':
+        return {
+          title: "Seguro de Vida",
+          content: (
+            <div className="space-y-4">
+              <p>Protección esencial centrada en la integridad física del titular.</p>
+              <ul className="space-y-3">
+                <li className="flex gap-2">
+                  <div className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 shrink-0" />
+                  <p><strong>Fallecimiento:</strong> Cancelación de la deuda ante cualquier causa de fallecimiento.</p>
+                </li>
+                <li className="flex gap-2">
+                  <div className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 shrink-0" />
+                  <p><strong>Invalidez Absoluta:</strong> Protección financiera ante situaciones que impidan la actividad profesional.</p>
+                </li>
+              </ul>
+            </div>
+          )
+        };
+      case 'senior':
+        return {
+          title: "Vida Senior",
+          content: (
+            <div className="space-y-4">
+              <p>Diseñado para clientes que buscan tranquilidad en su etapa de jubilación o madurez.</p>
+              <ul className="space-y-3">
+                <li className="flex gap-2">
+                  <div className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 shrink-0" />
+                  <p><strong>Especializados:</strong> Contratación disponible para mayores de 60 años.</p>
+                </li>
+                <li className="flex gap-2">
+                  <div className="w-1.5 h-1.5 bg-black rounded-full mt-1.5 shrink-0" />
+                  <p><strong>Sin sorpresas:</strong> Enfoque directo en la cobertura de fallecimiento.</p>
+                </li>
+              </ul>
+            </div>
+          )
+        };
+      case 'sin':
+        return {
+          title: "Sin Protección",
+          content: (
+            <div className="space-y-4">
+              <p className="text-red-600 font-bold">Atención: Operación sin seguro asociado.</p>
+              <p>Al seleccionar esta opción, el cliente asume todos los riesgos derivados de imprevistos que afecten a su capacidad de pago.</p>
+              <p>En caso de fallecimiento, la deuda pendiente se trasladará a sus herederos legales como parte de la masa hereditaria.</p>
+            </div>
+          )
+        };
+      default:
+        return null;
+    }
+  };
+
+  const modalData = getInfoContent();
+
   return (
-    <div className="w-full bg-white pb-20">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8">
+    <div className="w-full bg-white pb-32">
+      {/* Modal Overlay */}
+      {activeInfo && modalData && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white p-8 max-w-md w-full relative"
+          >
+            <button onClick={() => setActiveInfo(null)} className="absolute top-4 right-4 text-slate-400 hover:text-black">
+              <InfoIcon className="w-6 h-6 rotate-45" />
+            </button>
+            <h3 className="text-2xl font-bold mb-6 uppercase tracking-tight">{modalData.title}</h3>
+            <div className="text-slate-600 leading-relaxed font-sans">
+              {modalData.content}
+            </div>
+            <button 
+              onClick={() => setActiveInfo(null)}
+              className="w-full mt-8 bg-black text-white py-4 font-bold uppercase tracking-widest text-[10px] hover:bg-slate-800 transition-all rounded-full"
+            >
+              Cerrar
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      <div className="max-w-6xl mx-auto px-6 lg:px-12">
         
-        {/* Hero Section */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="py-16 sm:py-24 border-b border-slate-100 mb-16 text-center"
-        >
-          <span className="text-xs font-bold uppercase tracking-[0.4em] text-slate-400 mb-4 block animate-fade-in">Seguridad & Confianza</span>
-          <h1 className="text-4xl sm:text-6xl font-light tracking-tight text-black mb-6">
-            Protección de <span className="font-medium">Pagos</span>
-          </h1>
-          <p className="max-w-2xl mx-auto text-slate-500 text-lg sm:text-xl font-light">
-            Soluciones diseñadas para garantizar la tranquilidad de tu familia y la seguridad de tus compromisos financieros ante cualquier imprevisto.
-          </p>
-        </motion.div>
+        {/* --- HEADER --- */}
+        <div className="pt-24 pb-16 text-center">
+            <h1 className="text-6xl sm:text-7xl font-bold tracking-tighter text-black uppercase">
+              Protección de Pagos
+            </h1>
+        </div>
 
-        {/* Section: Pack Vida */}
-        <section className="mb-24">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-            <div>
-              <h2 className="text-2xl font-medium text-black tracking-tight mb-2 uppercase">Pack Vida</h2>
-              <p className="text-slate-400 text-sm">Coberturas esenciales para tu tranquilidad diaria.</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <FeatureCard 
-              title="Fallecimiento" 
-              tag="F"
-              description="Liquida el capital pendiente del préstamo en caso de fallecimiento por enfermedad o accidente."
-            />
-            <FeatureCard 
-              title="Gran Invalidez" 
-              tag="GI"
-              description="Garantía de liquidación del capital pendiente en supuestos de gran invalidez física comprobada."
-            />
-            <FeatureCard 
-              title="Diagnóstico Cáncer" 
-              tag="CAN"
-              description="Protección financiera inmediata ante el diagnóstico de patologías oncológicas durante la vigencia."
-            />
-            <FeatureCard 
-              title="Infarto Agudo" 
-              tag="INF"
-              description="Cobertura específica para infarto de miocardio agudo con necrosis muscular cardíaca acreditada."
-            />
-          </div>
-        </section>
-
-        {/* Section: Pack Protección */}
-        <section className="mb-24 p-10 bg-slate-50 border border-slate-100">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-light text-black mb-4 uppercase tracking-wide">Pack Protección Avanzada</h2>
-              <p className="text-slate-500">Extiende tu seguridad con coberturas laborales específicas.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div className="space-y-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="bg-black text-white p-2">
-                    <BriefcaseIcon className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-bold uppercase tracking-tight">Vida + Desempleo</h3>
+        {/* --- INSURANCE SECTIONS --- */}
+        <div className="space-y-32">
+            {/* 1. VIDA + DESEMPLEO / IT */}
+            <section className="animate-fade-in-up">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div className="space-y-8 order-2 lg:order-1">
+                        <h2 className="text-4xl sm:text-5xl font-bold tracking-tight text-black">Vida + Desempleo / IT</h2>
+                        <p className="text-slate-500 text-lg leading-relaxed">
+                            La cobertura más completa para proteger tu financiación ante cualquier imprevisto personal o profesional.
+                        </p>
+                        <ul className="space-y-4">
+                            <li className="flex items-center gap-4 text-sm font-medium text-slate-700">
+                                <div className="w-1.5 h-1.5 bg-black rounded-full" />
+                                Fallecimiento e Invalidez Absoluta.
+                            </li>
+                            <li className="flex items-center gap-4 text-sm font-medium text-slate-700">
+                                <div className="w-1.5 h-1.5 bg-black rounded-full" />
+                                Desempleo (para trabajadores asalariados).
+                            </li>
+                            <li className="flex items-center gap-4 text-sm font-medium text-slate-700">
+                                <div className="w-1.5 h-1.5 bg-black rounded-full" />
+                                Incapacidad Temporal (para autónomos).
+                            </li>
+                        </ul>
+                        <button onClick={() => setActiveInfo('completa')} className="bg-black text-white px-12 py-5 text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all rounded-full">
+                            Saber más
+                        </button>
+                    </div>
+                    <div className="bg-slate-50 aspect-square flex items-center justify-center p-12 rounded-[40px] order-1 lg:order-2">
+                        <div className="text-center">
+                            <span className="text-9xl font-bold text-slate-200">92</span>
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mt-4">CODE / COMPLETA</p>
+                        </div>
+                    </div>
                 </div>
-                <p className="text-slate-600 text-sm leading-relaxed">
-                  Para empleados por cuenta ajena con contrato indefinido o funcionarios. Cubre la cuota del préstamo con un máximo de 400€/mes.
-                </p>
-                <div className="grid grid-cols-2 gap-4 pt-4">
-                  <div className="border-l-2 border-slate-200 pl-4">
-                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Franquicia</span>
-                    <span className="text-sm font-medium">30 Días</span>
-                  </div>
-                  <div className="border-l-2 border-slate-200 pl-4">
-                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Carencia</span>
-                    <span className="text-sm font-medium">60 Días</span>
-                  </div>
-                </div>
-              </div>
+            </section>
 
-              <div className="space-y-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="bg-black text-white p-2">
-                    <ClockIcon className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-xl font-bold uppercase tracking-tight">Vida + Incapacidad</h3>
+            {/* 2. VIDA */}
+            <section className="animate-fade-in-up">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div className="bg-black aspect-square flex items-center justify-center p-12 rounded-[40px]">
+                        <div className="text-center">
+                            <span className="text-9xl font-bold text-slate-800/50">24</span>
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-600 mt-4">CODE / VIDA</p>
+                        </div>
+                    </div>
+                    <div className="space-y-8">
+                        <h2 className="text-4xl sm:text-5xl font-bold tracking-tight text-black">Pack Vida</h2>
+                        <p className="text-slate-500 text-lg leading-relaxed">
+                            Protección esencial para garantizar la tranquilidad de tu familia ante situaciones de fallecimiento o invalidez.
+                        </p>
+                        <ul className="space-y-4">
+                            <li className="flex items-center gap-4 text-sm font-medium text-slate-700">
+                                <div className="w-1.5 h-1.5 bg-black rounded-full" />
+                                Cobertura de fallecimiento por cualquier causa.
+                            </li>
+                            <li className="flex items-center gap-4 text-sm font-medium text-slate-700">
+                                <div className="w-1.5 h-1.5 bg-black rounded-full" />
+                                Gran Invalidez e Invalidez Permanente.
+                            </li>
+                            <li className="flex items-center gap-4 text-sm font-medium text-slate-700">
+                                <div className="w-1.5 h-1.5 bg-black rounded-full" />
+                                Enfermedades graves (Cáncer, Infarto).
+                            </li>
+                        </ul>
+                        <button onClick={() => setActiveInfo('vida')} className="bg-black text-white px-12 py-5 text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all rounded-full">
+                            Saber más
+                        </button>
+                    </div>
                 </div>
-                <p className="text-slate-600 text-sm leading-relaxed">
-                  Diseñado para autónomos y contratos temporales. Indemnización mensual ante incapacidad por accidente o enfermedad común.
-                </p>
-                <div className="grid grid-cols-2 gap-4 pt-4">
-                  <div className="border-l-2 border-slate-200 pl-4">
-                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Franquicia</span>
-                    <span className="text-sm font-medium">30 Días</span>
-                  </div>
-                  <div className="border-l-2 border-slate-200 pl-4">
-                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Carencia</span>
-                    <span className="text-sm font-medium">30 Días</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+            </section>
 
-        {/* Section: Packs de Contratación */}
-        <section className="mb-24">
-          <h2 className="text-2xl font-medium text-black tracking-tight mb-12 uppercase text-center">Packs Disponibles</h2>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {[
-              { 
-                num: "24", 
-                name: 'Pack Básico Plus', 
-                covers: 'F + GI + CAN + INF', 
-                age: '18 - 60 años', 
-                status: 'Estándar',
-                icon: <ShieldCheckIcon />
-              },
-              { 
-                num: "28", 
-                name: 'Pack Desempleo Plus', 
-                covers: 'F + GI + CAN + INF + D + IT', 
-                age: '18 - 60 años', 
-                status: 'Recomendado',
-                featured: true,
-                icon: <StarIcon />
-              },
-              { 
-                num: "87", 
-                name: 'Pack Senior', 
-                covers: 'Fallecimiento', 
-                age: '59 - 78 años', 
-                status: 'Seniors',
-                icon: <UsersIcon />
-              },
-            ].map((p) => (
-              <div 
-                key={p.num}
-                className={`p-10 border ${p.featured ? 'border-black bg-black text-white scale-105 z-10 shadow-2xl' : 'border-slate-100 bg-white text-black'}`}
-              >
-                <div className={`${p.featured ? 'text-white' : 'text-black'} mb-8`}>
-                  {p.icon}
+            {/* 3. VIDA SENIOR */}
+            <section className="animate-fade-in-up pb-24">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div className="space-y-8 order-2 lg:order-1">
+                        <h2 className="text-4xl sm:text-5xl font-bold tracking-tight text-black">Vida Senior</h2>
+                        <p className="text-slate-500 text-lg leading-relaxed">
+                            Seguro diseñado específicamente para personas mayores de 60 años, garantizando la cancelación de la deuda.
+                        </p>
+                        <ul className="space-y-4">
+                            <li className="flex items-center gap-4 text-sm font-medium text-slate-700">
+                                <div className="w-1.5 h-1.5 bg-black rounded-full" />
+                                Edad de contratación hasta los 78 años.
+                            </li>
+                            <li className="flex items-center gap-4 text-sm font-medium text-slate-700">
+                                <div className="w-1.5 h-1.5 bg-black rounded-full" />
+                                Sin necesidad de reconocimientos médicos complejos.
+                            </li>
+                            <li className="flex items-center gap-4 text-sm font-medium text-slate-700">
+                                <div className="w-1.5 h-1.5 bg-black rounded-full" />
+                                Protección directa del capital pendiente.
+                            </li>
+                        </ul>
+                        <button onClick={() => setActiveInfo('senior')} className="bg-black text-white px-12 py-5 text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all rounded-full">
+                            Saber más
+                        </button>
+                    </div>
+                    <div className="bg-slate-50 aspect-square flex items-center justify-center p-12 rounded-[40px] order-1 lg:order-2">
+                        <div className="text-center">
+                            <span className="text-9xl font-bold text-slate-200">87</span>
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mt-4">CODE / SENIOR</p>
+                        </div>
+                    </div>
                 </div>
-                <span className={`text-[10px] font-bold uppercase tracking-widest mb-2 block ${p.featured ? 'text-slate-400' : 'text-slate-400'}`}>{p.status}</span>
-                <h4 className="text-2xl font-bold mb-6 tracking-tight">{p.name}</h4>
-                <div className="space-y-4 mb-10">
-                  <div className="flex justify-between items-center text-sm border-b border-current py-2 opacity-80">
-                    <span>Coberturas</span>
-                    <span className="font-bold">{p.covers}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm border-b border-current py-2 opacity-80">
-                    <span>Edad</span>
-                    <span className="font-bold">{p.age}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm border-b border-current py-2 opacity-80">
-                    <span>Código Pack</span>
-                    <span className="font-bold">{p.num}</span>
-                  </div>
-                </div>
-                <button className={`w-full py-4 text-xs font-bold uppercase tracking-widest transition-colors ${p.featured ? 'bg-white text-black hover:bg-slate-200' : 'bg-black text-white hover:bg-slate-800'}`}>
-                  Seleccionar
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Section: Casos de Uso (FAQ Style) */}
-        <section className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-medium text-black tracking-tight mb-12 uppercase text-center">Información Adicional</h2>
-          <div className="space-y-8">
-            <div className="p-8 border border-slate-100">
-              <h4 className="text-lg font-bold text-black mb-4 flex items-center gap-3">
-                <div className="w-1.5 h-1.5 bg-black" />
-                Complementariedad del Seguro
-              </h4>
-              <p className="text-slate-500 text-sm leading-relaxed">
-                A diferencia de un seguro de vida convencional, el seguro de préstamo garantiza la cancelación exacta de la deuda pendiente en caso de siniestro, protegiendo el patrimonio de tus herederos de cargas financieras inesperadas.
-              </p>
-            </div>
-            <div className="p-8 border border-slate-100">
-              <h4 className="text-lg font-bold text-black mb-4 flex items-center gap-3">
-                <div className="w-1.5 h-1.5 bg-black" />
-                Soporte ante Desempleo
-              </h4>
-              <p className="text-slate-500 text-sm leading-relaxed">
-                Protegemos tus ingresos ante extinciones laborales imprevistas o incapacidades temporales que limiten tu actividad profesional (especialmente vital para autónomos), asegurando que las cuotas de tu préstamo queden cubiertas.
-              </p>
-            </div>
-          </div>
-        </section>
-
+            </section>
+        </div>
       </div>
     </div>
   );

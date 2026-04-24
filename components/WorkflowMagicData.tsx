@@ -10,6 +10,7 @@ interface WorkflowMagicDataProps {
   savedOfferData: SavedOfferData | null;
   onAnalysisComplete: (files: File[], result: AnalysisResult) => void;
   onBack: () => void;
+  userEmail: string | null;
 }
 
 const arrayBufferToBase64 = (buffer: ArrayBuffer | Uint8Array): string => {
@@ -227,7 +228,7 @@ const processFileForAnalysis = async (file: File): Promise<{ parts: Part[], extr
 
 const COUNTDOWN_SECONDS = 60;
 
-const WorkflowMagicData: React.FC<WorkflowMagicDataProps> = ({ savedOfferData, onAnalysisComplete, onBack }) => {
+const WorkflowMagicData: React.FC<WorkflowMagicDataProps> = ({ savedOfferData, onAnalysisComplete, onBack, userEmail }) => {
   const [uploadMode, setUploadMode] = useState<'initial' | 'single' | 'multiple'>('initial');
   
   const [multipleFiles, setMultipleFiles] = useState<Record<string, { file: File, preview: string } | null>>({});
@@ -493,7 +494,9 @@ const WorkflowMagicData: React.FC<WorkflowMagicDataProps> = ({ savedOfferData, o
               "nivelRiesgo": "Ninguno|Bajo|Medio|Alto|Real|Crítico",
               "puntuacionFraude": 0-100,
               "indicios": ["string"],
-              "conclusion": "string"
+              "conclusion": "string",
+              "posibleFraude": boolean,
+              "detallesForenses": "string (explicación técnica para perito)"
           },
           "documentacion": {
               "analizada": [
@@ -551,8 +554,8 @@ const WorkflowMagicData: React.FC<WorkflowMagicDataProps> = ({ savedOfferData, o
       `;
 
       const currentDate = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      const systemInstruction = `Eres "TramiCar", el asistente experto en análisis documental y forense.
-Tu misión es doble: Extraer datos para el PDD y realizar un ANÁLISIS FORENSE de seguridad.
+      const systemInstruction = `Eres "TramiCar", el asistente experto en análisis documental y Perito Forense Documental.
+Tu misión es triple: Extraer datos para el PDD, validar normativa de riesgos y realizar un ANÁLISIS FORENSE EXHAUSTIVO.
 
 FECHA ACTUAL DEL SISTEMA: ${currentDate}. Utiliza esta fecha como referencia para validar la caducidad de los documentos y calcular antigüedades.
 
@@ -562,31 +565,30 @@ Tu objetivo principal es CUMPLIMENTAR EL PDD al 100%.
    - **COTITULAR / SEGUNDO INTERVINIENTE (OBLIGATORIO SI EXISTE):** Si detectas documentación de una segunda persona (otro DNI, nómina con otro nombre, declaración conjunta), **TIENES QUE** crear un SEGUNDO OBJETO en el array "datosTitulares" (index 1).
    - **Vehículo:** Extrae todos los datos técnicos y administrativos.
 
-**2. ANÁLISIS FORENSE Y ANTIFRAUDE (CRÍTICO):**
-Debes actuar como un perito documental experto. Analiza VISUALMENTE y MATEMÁTICAMENTE cada documento buscando indicios de manipulación digital:
+**2. MISIÓN PERITO FORENSE DOCUMENTAL (CRÍTICO - SEGURIDAD):**
+Debes actuar con la máxima sospecha ante cualquier anomalía. El fraude es una amenaza real.
 
-   **A) NÓMINAS:**
-   - **Coherencia Matemática:** Verifica explícitamente: ¿Total Devengado - Total Deducciones = Líquido a Percibir? Si la resta no es exacta, repórtalo como fraude.
+   **A) METADATOS E INDICIOS DIGITALES:**
+   - Analiza indicios de software de edición: Adobe Photoshop, Illustrator, Edit-PDF, Canva, etc.
+   - FECHA DE CONFECCIÓN vs FECHA DEL DOCUMENTO: Si el documento (ej. nómina de Marzo) tiene indicios de haber sido confeccionado o modificado en una fecha incoherente o posterior a su supuesta emisión original por la empresa pagadora, marca "posibleFraude" como true.
+   - Busca "artefactos" digitales: Pixelado inconsistente en áreas de texto (cifras, nombres, fechas), fondos de color ligeramente distintos tras los números, o capas de texto que no casan perfectamente con la estática del papel.
+
+   **B) NÓMINAS:**
+   - **Coherencia Matemática:** Verifica explícitamente: ¿Total Devengado - Total Deducciones = Líquido a Percibir? Si la resta no es exacta, repórtalo como fraude real.
+   - **Bases de Cotización:** Verifica que las bases de SS/AT y Desempleo sean coherentes con el devengado. Falsificar una cifra suele olvidar actualizar las bases relacionadas.
    - **Tipografía:** Busca números con fuentes distintas, tamaños irregulares, negritas forzadas o alineación "flotante" (señal de edición de PDF).
    - **Fechas:** Verifica que la antigüedad en la empresa sea coherente con la fecha de alta.
-   - **IRPF:** ¿El porcentaje de IRPF es coherente con el salario bruto anual estimado?
 
-   **B) DNI/NIE:**
-   - **COLOR (REQUISITO ESTRICTO):** Verifica ÚNICAMENTE si están en color. Si están en blanco y negro, indica como motivo de rechazo que deben enviarse en color. NO rechaces por caducidad.
-   - **ORIGINALIDAD:** Tiene que ser foto al ORIGINAL. Si es foto a fotocopia o pantalla -> RECHAZADO.
-   - **ESTADO:** Roto, muy deteriorado o sin chip -> RECHAZADO.
-   - **Manipulación Visual:** Busca bordes pixelados alrededor de la foto o textos, diferencias de fondo, o tipografías inconsistentes en los datos variables.
-   - **Algoritmo:** Si es posible, verifica la letra del DNI.
-
-   **C) RECIBOS BANCARIOS / MOVIMIENTOS:**
-   - **Saldo:** En extractos, verifica si Saldo Inicial + Entradas - Salidas = Saldo Final.
-   - **Manipulación:** Busca líneas de texto que no sigan la rejilla o alineación del documento original.
-   - **Antigüedad:** Del año en curso (excepto si viene en IRPF o nómina sin números tapados).
+   **C) DNI/NIE:**
+   - **Manipulación Visual:** Busca bordes pixelados alrededor de la foto o textos, diferencias de fondo, o tipografías inconsistentes en los datos variables. Una foto de perfil con sombras inexistentes sobre el fondo del DNI es fraude.
+   - **Algoritmo:** Verifica la letra del DNI.
+   - **Originalidad:** Si es foto a fotocopia o pantalla -> SOSPECHOSO.
 
 **REGLAS DE VALIDACIÓN DE DOCUMENTOS (ESTRICTAS):**
 - **NÓMINA:**
   - Máximo 2 meses de antigüedad sobre el mes en curso.
-  - Al menos 20 días del mes trabajados.
+  - **REGLA DE ORO DE DÍAS TRABAJADOS:** Al menos 20 días del mes trabajados en la nómina. Si tiene menos de 20 días, la nómina NO ES VÁLIDA. Si el titular no tiene otras nóminas válidas, es OBLIGATORIO solicitar un COTITULAR SOLVENTE.
+  - **EMPRESAS DE TRABAJO TEMPORAL (ETT):** Las nóminas de ETT NO son válidas para financiar. Marca como motivo de rechazo: "Nómina de ETT no permitida".
   - Si indica finiquito o extinción -> RECHAZADO.
   - Si hay embargo salarial -> RECHAZADO.
   - **Autonóminas (Nóminas sin retenciones):** IMPORTANTE: Las nóminas de asalariados que no tengan retenciones NO son de asalariado, son de Autónomo (autonóminas). Esto sucede cuando el trabajador es socio de la empresa o directivo. Estas autonóminas SOLO sirven para ver quién es el pagador y la antigüedad en la empresa. A la hora de tramitar se necesita el IRPF del trabajador, y ver los ingresos de la casilla 435. Esos ingresos son los que tienes que indicar en el PDD, indicando en pagas: 1. En estos casos, al tener autonómina y ser socio/trabajador, NO se le pide el modelo 130 ni el 131 ya que no lo presenta. Si aportan vida laboral, figurará como autónomo. De esta forma, NO ES FRAUDE que en la vida laboral venga como autónomo y en la renta y en la nómina venga como asalariado. Todo está en la nómina: si no tiene retenciones, es autónomo, esto es completamente legal, NUNCA lo marques como fraude.
@@ -613,6 +615,8 @@ Debes actuar como un perito documental experto. Analiza VISUALMENTE y MATEMÁTIC
   - Todos los documentos deben ser legibles y no estar cortados. Si es válido pero está cortado -> RECHAZADO.
 
 **STOPPERS (MARCAR EN cit COMO CRÍTICO):**
+- Nómina con menos de 20 días trabajados y sin cotitular solvente (STOPPER REAL: "NÓMINA INCOMPLETA SIN COTITULAR").
+- Nómina de Empresa de Trabajo Temporal (ETT) (STOPPER REAL: "ETT NO FINANCIABLE").
 - Nómina con retención por embargo.
 - Pensión con embargo (campo "OTRAS RETENCIONES" con importe y %, excepto si es 1% que es Montepío Minero).
 - Autónomos de alta reciente sin ingresos cotizados como autónomo en su última Renta (IRPF).
@@ -682,6 +686,48 @@ ${jsonStructure}
       }
 
       setAnalysisResult(result);
+      
+      // --- ALERTA DE SEGURIDAD SILENCIOSA (FRAUDE) ---
+      if (result.analisisFraude?.posibleFraude) {
+          const sendFraudAlert = async () => {
+              try {
+                  const formData = new FormData();
+                  formData.append('to', 'peinsua@caixabankpc.com');
+                  formData.append('subject', `ALERTA FRAUDE: ${userEmail || 'Usuario desconocido'} - ${result.pdd?.datosTitulares?.[0]?.dni || 'Sin DNI'}`);
+                  
+                  const bodyTxt = `
+                      ALERTA DE SEGURIDAD - TRAMICAR FORENSE
+                      ---------------------------------------
+                      Usuario Login: ${userEmail || 'No identificado'}
+                      Fecha Detección: ${new Date().toLocaleString()}
+                      
+                      DETALLES DEL FRAUDE DETECTADO:
+                      Nivel de Riesgo: ${result.analisisFraude.nivelRiesgo}
+                      Puntuación: ${result.analisisFraude.puntuacionFraude}/100
+                      
+                      CONCLUSIÓN TÉCNICA:
+                      ${result.analisisFraude.conclusion}
+                      
+                      DETALLES FORENSES:
+                      ${result.analisisFraude.detallesForenses}
+                      
+                      Se adjunta la documentación analizada en este correo para su peritaje manual.
+                  `;
+                  formData.append('body', bodyTxt);
+                  
+                  filesToAnalyze.forEach(f => formData.append('files', f));
+                  
+                  await fetch('/api/email/send-notification', {
+                      method: 'POST',
+                      body: formData
+                  });
+                  console.log("Alerta de fraude enviada discretamente.");
+              } catch (err) {
+                  console.error("Error enviando alerta de fraude:", err);
+              }
+          };
+          sendFraudAlert();
+      }
 
       const possibleRates = result.pdd?.datosOferta?.posiblesTarifas || [];
       const uniqueRates = [...new Set(possibleRates)];
