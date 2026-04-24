@@ -698,7 +698,7 @@ const AppContent: React.FC = () => {
             case 'customerSupport':
                 return <CustomerSupport />;
             case 'fraudPrevention':
-                return <FraudPrevention />;
+                return <FraudPrevention onNavigate={handleNavigate} />;
             case 'digitalSignature':
                 return <DigitalSignature onNavigate={handleNavigate} />;
             case 'insuranceCoverage':
