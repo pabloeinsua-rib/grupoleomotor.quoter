@@ -6,7 +6,7 @@ import type { View, SavedOfferData } from '../App.tsx';
 import { EditIcon, InfoIcon, FileTextIcon, SearchIcon, CheckIcon, EuroIcon, WarningIcon, XIcon, SpinnerIcon, ArrowUturnLeftIcon, PrintIcon, ShareIcon, DownloadIcon, ManualsIcon, CameraIcon, EmailIcon, PhoneIcon, EyeIcon } from './Icons.tsx';
 import { licensePlateData } from '../data/licensePlates.ts';
 import { getAvailableTerms, getApplicableTariff } from '../data/tariffs.ts';
-import { getTarifaCoefficient, getLeasingTarifa } from './TarifaData.ts';
+import { getTarifaCoefficient, getLeasingTarifa, getAvailableRates, getTariffName } from './TarifaData.ts';
 import OfferDetails, { type OfferDetailsData } from './OfferDetails.tsx';
 import AmortizationTable from './AmortizationTable.tsx';
 import PdfViewerModal from './PdfViewerModal.tsx';
@@ -675,8 +675,9 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
         if (productType === 'Leasing') {
             return [5.99, 6.99, 7.99];
         }
-        return currentTariff.rates.filter(r => r.refs[term] !== undefined).map(r => r.rate);
-    }, [currentTariff, term, productType]);
+        const rates = getAvailableRates(insuranceType);
+        return rates.map(r => parseFloat(r));
+    }, [insuranceType, productType]);
 
     useEffect(() => {
         if (availableRates.length > 0) {
@@ -1342,9 +1343,22 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
                         </div>
                     </div>
                     
-                    <div className="flex items-center justify-between mt-4">
-                        <label className="text-gray-600 font-bold text-xs uppercase tracking-wider">Gastos de Apertura</label>
-                        <button onClick={() => setShowFeeModal(true)} className="text-black hover:text-slate-700 text-xs font-bold underline flex items-center gap-1">{openingFeePercentage}% <EditIcon className="w-3 h-3" /></button>
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                             <label className="text-gray-600 font-bold text-xs uppercase tracking-wider">Tarifa Aplicada</label>
+                             <div className="flex flex-col items-end">
+                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-none uppercase tracking-widest ${getTariffName(insuranceType).includes('Salón') ? 'bg-caixa-blue text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                    {getTariffName(insuranceType)}
+                                </span>
+                                <span className="text-[9px] text-slate-500 font-medium mt-0.5">
+                                    Válida hasta {getTariffName(insuranceType).includes('Salón') ? '15/05/2026' : '31/12/2026'}
+                                </span>
+                             </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <label className="text-gray-600 font-bold text-xs uppercase tracking-wider">Gastos de Apertura</label>
+                            <button onClick={() => setShowFeeModal(true)} className="text-black hover:text-slate-700 text-xs font-bold underline flex items-center gap-1">{openingFeePercentage}% <EditIcon className="w-3 h-3" /></button>
+                        </div>
                     </div>
 
                     {/* Insurance Selection - GRID LAYOUT */}
@@ -1637,15 +1651,14 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
                             tin={interestRate}
                             tae={tae}
                             insuranceIncluded={insuranceType !== 'Sin Protección'}
+                            insuranceType={insuranceType}
                             clientType={clientType}
                             vehicleType={vehicleType}
                             isCuotaSolucion={productType === 'Resicuota'}
                             finalValuePercentage={finalValuePercentage}
-                            insuranceType={insuranceType}
                             productType={productType} 
                             monthlyPaymentNet={monthlyPaymentNet} 
                             residualValue={residualValue} 
-                            showCommission={canSeeCommission}
                             showFullAmortization={true}
                         />
                     </div>

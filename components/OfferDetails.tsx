@@ -3,6 +3,8 @@ import React from 'react';
 import AmortizationTable from './AmortizationTable.tsx';
 import InsuranceCoverageDetails from './InsuranceCoverageDetails.tsx';
 
+import { isCampaignArrowActive } from './TarifaCampañaArrow.ts';
+
 export interface OfferDetailsData {
     pvp: number;
     entrada: number;
@@ -35,7 +37,6 @@ interface OfferDetailsProps {
   productType?: string | null;
   monthlyPaymentNet?: number | null; // For Leasing
   residualValue?: number | null; // For Leasing
-  showCommission?: boolean;
   showFullAmortization?: boolean;
 }
 
@@ -109,7 +110,6 @@ const OfferDetails: React.FC<OfferDetailsProps> = ({
     productType,
     monthlyPaymentNet,
     residualValue,
-    showCommission,
     showFullAmortization = false
 }) => {
     const today = new Date().toLocaleDateString('es-ES', {
@@ -192,6 +192,15 @@ const OfferDetails: React.FC<OfferDetailsProps> = ({
                             <span>{data.plazo} {isLeasing ? '+ 1 ' : ''}meses</span>
                         </div>
                         <div className="flex justify-between font-bold">
+                            <span>Tarifa Aplicada</span>
+                            <div className="flex flex-col items-end">
+                                <span className="uppercase text-[10px]">{insuranceType !== 'Sin Protección' && isCampaignArrowActive() ? "Campaña Salón 2026" : "Tarifa Grupo Leomotor"}</span>
+                                <span className="text-[8px] font-normal text-slate-500 italic block -mt-1 leading-none text-right">
+                                    Válida hasta {insuranceType !== 'Sin Protección' && isCampaignArrowActive() ? '15/05/2026' : '31/12/2026'}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="flex justify-between font-bold">
                             <span>{isLeasing ? 'Gastos de Apertura (Neto)' : 'Gastos de Apertura'}</span>
                             <span>{formatCurrency(data.gastosApertura)}</span>
                         </div>
@@ -254,12 +263,6 @@ const OfferDetails: React.FC<OfferDetailsProps> = ({
                             <p className="text-[10px] uppercase font-bold text-slate-400 mb-1 tracking-widest">(*) T.A.E.</p>
                             <p className="text-3xl font-light text-white">{formatPercent(tae)}%</p>
                         </div>
-                        {showCommission && data.commissionValue !== undefined && (
-                            <div className="flex-1 p-4 flex flex-col justify-center border-t border-slate-800 bg-slate-900">
-                                <p className="text-[10px] uppercase font-bold text-slate-500 mb-1 tracking-widest">Comisión (Ref.)</p>
-                                <p className="text-xl font-light text-white">{formatCurrency(data.commissionValue)}</p>
-                            </div>
-                        )}
                     </div>
                 </div>
 

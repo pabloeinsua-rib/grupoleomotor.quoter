@@ -1,3 +1,5 @@
+import { CAMPAIGN_ARROW_DATA, isCampaignArrowActive } from './TarifaCampañaArrow.ts';
+
 export const TARIFA_DATA: Record<string, Record<string, { pb: number, ref: number }>> = {
     '5.49': {
         '24': { pb: 0.047050, ref: 3.00 },
@@ -106,10 +108,43 @@ export const TARIFA_DATA: Record<string, Record<string, { pb: number, ref: numbe
     }
 };
 
+export const getAvailableRates = (insuranceType: string): string[] => {
+    if (isCampaignArrowActive() && insuranceType !== 'Sin Protección') {
+        return Object.keys(CAMPAIGN_ARROW_DATA).sort((a, b) => parseFloat(a) - parseFloat(b));
+    }
+    return Object.keys(TARIFA_DATA).sort((a, b) => parseFloat(a) - parseFloat(b));
+};
+
+export const getTariffName = (insuranceType: string): string => {
+    if (isCampaignArrowActive() && insuranceType !== 'Sin Protección') {
+        return "Campaña Salón 2026";
+    }
+    return "Tarifa Grupo Leomotor";
+};
+
 export const getTarifaCoefficient = (interestRate: number, term: number, insuranceType: string): { coefficient: number, ref: number } | null => {
     const rateStr = interestRate.toFixed(2);
     const termStr = term.toString();
     
+    // Prioridad a la campaña Arrow si está activa y hay seguro
+    if (isCampaignArrowActive() && insuranceType !== 'Sin Protección') {
+        const campaignRate = interestRate.toString();
+        const campaign = CAMPAIGN_ARROW_DATA[campaignRate] || CAMPAIGN_ARROW_DATA[rateStr];
+        if (campaign && campaign.terms[termStr]) {
+            const data = campaign.terms[termStr];
+            let coefficient = data.pb;
+            const ref = data.ref;
+            
+            if (insuranceType === 'Vida + Desempleo / IT') {
+                coefficient = data.pbDesempleo;
+            } else if (insuranceType === 'Vida Senior') {
+                coefficient = data.pb + 0.00140; 
+            }
+            
+            return { coefficient, ref };
+        }
+    }
+
     if (TARIFA_DATA[rateStr] && TARIFA_DATA[rateStr][termStr]) {
         const data = TARIFA_DATA[rateStr][termStr];
         let coefficient = data.pb;
