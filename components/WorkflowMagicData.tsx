@@ -544,7 +544,7 @@ const WorkflowMagicData: React.FC<WorkflowMagicDataProps> = ({ savedOfferData, o
                     },
                     "datosVivienda": { "tipoPropiedad": "string", "antiguedad": "string", "otrosCreditos": "string" },
                     "datosLaborales": {
-                        "situacionLaboral": "string", "antiguedadLaboral": "string", "ingresosFijos": number, "numeroPagas": number, "profesion": "string", "cargo": "string",
+                        "situacionLaboral": "string", "antiguedadLaboral": "string", "antiguedadLaboralMes": "string", "antiguedadLaboralAnio": "string", "ingresosFijos": number, "numeroPagas": number, "profesion": "string", "cargo": "string",
                         "nombreEmpresa": "string", "cifEmpresa": "string", "actividadEmpresa": "string", "direccionEmpresa": "string", "codigoPostalEmpresa": "string", "poblacionEmpresa": "string", "telefonoEmpresa": "string"
                     }
                 }
@@ -562,7 +562,11 @@ FECHA ACTUAL DEL SISTEMA: ${currentDate}. Utiliza esta fecha como referencia par
 **1. EXTRACCIÓN DE DATOS PDD Y TITULARES (Prioridad Alta):**
 Tu objetivo principal es CUMPLIMENTAR EL PDD al 100%. 
    - **Titular Principal:** Extrae TODOS los datos (DNI, Nombre, Dirección, Laboral, Banco, Contacto).
-   - **COTITULAR / SEGUNDO INTERVINIENTE (OBLIGATORIO SI EXISTE):** Si detectas documentación de una segunda persona (otro DNI, nómina con otro nombre, declaración conjunta), **TIENES QUE** crear un SEGUNDO OBJETO en el array "datosTitulares" (index 1).
+   - **ANTIGÜEDAD LABORAL (MÁXIMA PRECISIÓN):** DEBES extraer la fecha de antigüedad REAL que aparezca en la nómina o Vida Laboral. 
+     * **IMPORTANTE:** NUNCA inventes la fecha ni pongas "2020" por defecto si no la encuentras. 
+     * Si no aparece la fecha explícita, búscala en la Vida Laboral. 
+     * Separa siempre el mes (MM) y el año (YYYY) en los campos "antiguedadLaboralMes" y "antiguedadLaboralAnio".
+   - **COTITULAR / SEGUNDO INTERVINIENTE (OBLIGATORIO SI EXISTE):** Si detectas documentación de una segunda persona (otro DNI, nómina con otro nombre, declaración conjunta), **TIENES QUE** crear un SEGUNDO OBJETO en el array "datosTitulares" (index 1). Extrae también su ANTIGÜEDAD LABORAL REAL de su documentación.
    - **Vehículo:** Extrae todos los datos técnicos y administrativos.
 
 **2. MISIÓN PERITO FORENSE DOCUMENTAL (CRÍTICO - SEGURIDAD):**

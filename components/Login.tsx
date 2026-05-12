@@ -32,6 +32,7 @@ export const RESPONSABLES_EMAILS = [
   "jaimesanchez@toyota.grupoleomotor.com",
   "javierivan.rodriguez@asturias.toyota.es",
   "bernabemartin@lexus.grupoleomotor.com",
+  "marcosgonzalez@toyota.grupoleomotor.com",
   "aaronisidoro@toyota.grupoleomotor.com",
   "pabloeinsua@gmail.com",
   // Typos comunes

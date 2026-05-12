@@ -730,8 +730,8 @@ const RequestProcessing: React.FC<RequestProcessingProps> = ({ savedOfferData, a
               }
           }
 
-          const antMes = laboral.antiguedadLaboralMes || '01';
-          const antAnio = laboral.antiguedadLaboralAnio || '2020';
+          const antMes = laboral.antiguedadLaboralMes || '';
+          const antAnio = laboral.antiguedadLaboralAnio || '';
 
           return `
             ${renderHtmlRow('Situación Laboral', laboral.situacionLaboral, isDoubtfulField('situacionLaboral'))}

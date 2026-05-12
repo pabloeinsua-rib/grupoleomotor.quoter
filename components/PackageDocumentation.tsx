@@ -633,7 +633,10 @@ const PackageDocumentation: React.FC<PackageDocumentationProps> = ({ savedOfferD
       1. LEER DOCUMENTOS CON PRECISIÓN OCR EXTREMA.
       2. EXTRAER DATOS PDD Y DETECTAR FRAUDE/ERRORES CRÍTICOS.
       3. **ANÁLISIS PROFUNDO:** Revisa CADA documento, CADA página y CADA pequeño texto. No ignores nada. Analiza sellos, firmas, fechas y logotipos.
-      4. **TÓMATE TU TIEMPO:** El análisis debe ser exhaustivo. Si hay varios titulares, extrae los datos de TODOS.
+      4. **ANTIGÜEDAD LABORAL (MÁXIMA PRIORIDAD):** Extrae la FECHA REAL DE ANTIGÜEDAD que figura en la nómina o en la Vida Laboral. 
+         * No uses "2020" como comodín. Si no está en la nómina, búscala en la Vida Laboral. 
+         * Indica el mes y el año por separado en "antiguedadLaboralMes" y "antiguedadLaboralAnio".
+      5. **TÓMATE TU TIEMPO:** El análisis debe ser exhaustivo. Si hay varios titulares, extrae los datos de TODOS.
 
       **REGLAS DE VALIDACIÓN DE DOCUMENTOS (ESTRICTAS):**
       - **DNI/NIE/PASAPORTE:** 
@@ -761,7 +764,7 @@ const PackageDocumentation: React.FC<PackageDocumentationProps> = ({ savedOfferD
                     "contacto": { "movil": "string", "email": "string" },
                     "datosBancarios": { "iban": "string", "entidad": "string", "antiguedad": "string" },
                     "datosLaborales": { 
-                        "situacionLaboral": "string", "antiguedadLaboral": "string", "origenIngresos": "string", 
+                        "situacionLaboral": "string", "antiguedadLaboral": "string", "antiguedadLaboralMes": "string", "antiguedadLaboralAnio": "string", "origenIngresos": "string", 
                         "ingresosFijos": number, "numeroPagas": number, "ingresosVariables": number, 
                         "profesion": "string", "cargo": "string", "nombreEmpresa": "string", "cifEmpresa": "string", 
                         "actividadEmpresa": "string", "direccionEmpresa": "string", "codigoPostalEmpresa": "string", 
