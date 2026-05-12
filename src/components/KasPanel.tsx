@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Shield, Building2, Search, UploadCloud, Layers, BarChart3, Users, FileText, FileSpreadsheet, UserPlus } from 'lucide-react';
+import { Settings, Shield, Building2, Search, UploadCloud, Layers, BarChart3, Users, FileText, FileSpreadsheet, UserPlus, Share2, QrCode, Copy, Check } from 'lucide-react';
 
 export default function KasPanel({ user, onLogout }: any) {
   const [agreements, setAgreements] = useState<any[]>([]);
@@ -27,6 +27,14 @@ export default function KasPanel({ user, onLogout }: any) {
 
   // Add Seller Modal
   const [showAddSellerPopup, setShowAddSellerPopup] = useState<{pdvCodigo: string, pdvNombre: string} | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    const url = window.location.origin;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const fetchTariffs = async () => {
     try {
@@ -261,17 +269,47 @@ export default function KasPanel({ user, onLogout }: any) {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm text-center">
+                    {/* Autodistribuible Card */}
+                    <div className="bg-white rounded-2xl p-0 border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+                        <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                                <Share2 className="w-4 h-4 text-blue-500" /> Distribución
+                            </h3>
+                            <div className="bg-blue-100 text-blue-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">PWA Active</div>
+                        </div>
+                        <div className="p-6 flex flex-col items-center text-center flex-1 justify-center">
+                            <div className="w-20 h-20 mb-4 rounded-3xl shadow-lg border-4 border-white overflow-hidden p-0 bg-white">
+                                <img src="/icon-192x192.png" alt="App Icon" className="w-full h-full object-cover" />
+                            </div>
+                            <h4 className="font-bold text-slate-800 text-lg mb-1">Quoter Automotive</h4>
+                            <p className="text-xs text-slate-500 mb-6 leading-relaxed px-4">Comparte este enlace con tu red comercial para que instalen la App en sus dispositivos.</p>
+                            
+                            <div className="w-full flex gap-2">
+                                <button 
+                                    onClick={handleCopyLink}
+                                    className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all ${copied ? 'bg-emerald-500 text-white' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-200'}`}
+                                >
+                                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                    {copied ? '¡Copiado!' : 'Copiar Enlace'}
+                                </button>
+                                <button 
+                                    onClick={() => window.open(`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(window.location.origin)}`, '_blank')}
+                                    className="p-3 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
+                                    title="Generar QR"
+                                >
+                                    <QrCode className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col justify-center text-center">
                         <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-1">Usuarios Activos</p>
                         <p className="text-4xl font-black text-slate-800">1,204</p>
                     </div>
-                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm text-center">
+                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col justify-center text-center">
                         <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-1">Sesiones</p>
                         <p className="text-4xl font-black text-blue-600">3,592</p>
-                    </div>
-                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm text-center">
-                        <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mb-1">Cotizaciones Emitidas</p>
-                        <p className="text-4xl font-black text-emerald-600">845</p>
                     </div>
                 </div>
 
