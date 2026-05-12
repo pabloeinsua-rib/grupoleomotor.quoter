@@ -1,4 +1,4 @@
-export const CAMPAIGN_ARROW_EXPIRY = '2026-05-15T23:59:59';
+export const CAMPAIGN_ARROW_EXPIRY = '2026-05-18T23:59:59';
 
 export const isCampaignArrowActive = () => {
     const now = new Date();

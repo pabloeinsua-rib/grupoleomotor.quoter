@@ -1351,7 +1351,7 @@ const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onSaveOffer, onContin
                                     {getTariffName(insuranceType)}
                                 </span>
                                 <span className="text-[9px] text-slate-500 font-medium mt-0.5">
-                                    Válida hasta {getTariffName(insuranceType).includes('Salón') ? '15/05/2026' : '31/12/2026'}
+                                    Válida hasta {getTariffName(insuranceType).includes('Salón') ? '18/05/2026' : '31/12/2026'}
                                 </span>
                              </div>
                         </div>

@@ -196,7 +196,7 @@ const OfferDetails: React.FC<OfferDetailsProps> = ({
                             <div className="flex flex-col items-end">
                                 <span className="uppercase text-[10px]">{insuranceType !== 'Sin Protección' && isCampaignArrowActive() ? "Campaña Salón 2026" : "Tarifa Grupo Leomotor"}</span>
                                 <span className="text-[8px] font-normal text-slate-500 italic block -mt-1 leading-none text-right">
-                                    Válida hasta {insuranceType !== 'Sin Protección' && isCampaignArrowActive() ? '15/05/2026' : '31/12/2026'}
+                                    Válida hasta {insuranceType !== 'Sin Protección' && isCampaignArrowActive() ? '18/05/2026' : '31/12/2026'}
                                 </span>
                             </div>
                         </div>
